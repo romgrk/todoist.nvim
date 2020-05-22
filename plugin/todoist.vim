@@ -8,6 +8,6 @@ hi! todoistdateoverdue guifg=#FF6D6D
 hi! todoistdatetoday   guifg=#52E054
 
 hi! todoistContent          gui=bold
-hi! todoistContentCompleted gui=bold,strikethrough
+hi! todoistContentCompleted gui=strikethrough
 
 hi! link todoistError ErrorMsg
