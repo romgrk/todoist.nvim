@@ -1,13 +1,15 @@
 
-# todoist.vim (neovim only)
+# todoist.vim (neovim only) [WIP]
 
 > A hopefully usable todoist extension for neovim
 
 #### Install
 
 ```vim
-Plug 'romgrk/todoist.vim', { 'do': 'npm install' }
+Plug 'romgrk/todoist.vim', { 'do': 'UpdateRemotePlugins' }
 ```
+
+You might need to `npm install`, haven't polished the installation process yet.
 
 #### Requirements
 
