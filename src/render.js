@@ -11,76 +11,81 @@ const NO_BREAK_SPACE = ' '
 
 const content = {
   header: [
-    [{ hl: 'todoistTitle', text: '     Inbox     ' }],
+    [{ hl: 'todoistTitle', text: '    Inbox     ' }],
     [],
   ],
-  tasks: [],
+  items: [],
 }
 
-module.exports = { full, line, lineToTaskIndex }
+module.exports = { full, line, lineToItemIndex }
 
 async function full(nvim, state) {
-  content.tasks = []
+  content.items = []
 
-  for (const t of state.tasks) {
-    content.tasks.push(renderTask(t))
+  for (const i of state.items) {
+    content.items.push(renderItem(i))
   }
 
   const lines = [
     ...content.header,
-    ...content.tasks,
+    ...content.items,
   ]
 
   await nvim.callFunction('todoist#set_lines', [lines])
 }
 
 async function line(nvim, state, index) {
-  const t = state.tasks[index]
-  const parts = renderTask(t)
+  const i = state.items[index]
+  const parts = renderItem(i)
 
-  content.tasks[index] = parts
+  content.items[index] = parts
 
-  await nvim.callFunction('todoist#set_line', [parts, index + OFFSET])
+  await nvim.callFunction('todoist#set_line', [parts, index + OFFSET, true])
 }
 
 
-function lineToTaskIndex(lineNumber) {
-  return lineNumber - content.header.length
+function lineToItemIndex(lineNumber) {
+  const index = lineNumber - content.header.length
+  if (index < 0)
+    return 0
+  if (index > (content.items.length - 1))
+    return content.items.length - 1
+  return index
 }
 
 /*
  * Rendering functions
  */
 
-function renderTask(t) {
+function renderItem(i) {
   return [
-    renderIndent(t),
-    renderCheckbox(t),
+    renderIndent(i),
+    renderCheckbox(i),
+    renderContent(i),
     { hl: 'todoistSeparator', text: ' ' },
-    renderContent(t),
-    { hl: 'todoistSeparator', text: ' ' },
-    renderDueDate(t.due)
+    renderDueDate(i.due)
   ]
 }
 
-function renderIndent(t) {
-  return { hl: 'Normal', text: ' '.repeat(t.depth * 4) }
+function renderIndent(i) {
+  return { hl: 'Normal', text: ' '.repeat(i.depth * 4) }
 }
 
-function renderCheckbox(t) {
-  const hl = t.error ? 'todoistError' : 'todoistCheckbox'
+function renderCheckbox(i) {
+  const hl = i.error ? 'todoistError' : 'todoistCheckbox'
   const text =
-    t.error ? '  ' :
-    t.completing ? '  ' :
-    t.completed ? '[x]' : '[ ]'
+    i.error ?      '  ' :
+    i.completing ? '  ' :
+    i.checked ?    '  ' :
+                   '  '
 
   return { hl, text }
 }
 
-function renderContent(t) {
+function renderContent(i) {
   return {
-    hl: 'todoistContent' + (t.completed ? 'Completed' : ''),
-    text: t.content,
+    hl: 'todoistContent' + (i.checked ? 'Completed' : ''),
+    text: i.content,
   }
 }
 

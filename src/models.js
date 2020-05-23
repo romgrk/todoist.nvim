@@ -4,45 +4,45 @@
 
 const { indexBy, prop } = require('rambda')
 
-module.exports = { processTasks }
+module.exports = { processItems }
 
-function processTasks(tasks) {
-  const byId = indexBy(prop('id'), tasks)
-  const rootTasks = []
-  for (let t of tasks) {
-    t.children = []
-    if (!t.parent) {
-      rootTasks.push(t)
+function processItems(items) {
+  const byId = indexBy(prop('id'), items)
+  const rootItems = []
+  for (let i of items) {
+    i.children = []
+    if (!i.parent_id) {
+      rootItems.push(i)
     }
     else {
-      const parent = byId[t.parent]
+      const parent = byId[i.parent_id]
       if (!parent.children)
         parent.children = []
-      parent.children.push(t)
+      parent.children.push(i)
     }
   }
-  rootTasks.sort(compareByOrder)
-  sortChildrenRecursive(rootTasks)
-  return flatten(rootTasks)
+  rootItems.sort(compareByOrder)
+  sortChildrenRecursive(rootItems)
+  return flatten(rootItems)
 }
 
-function flatten(tasks, result = [], depth = 0) {
-  for (let t of tasks) {
-    t.depth = depth
-    result.push(t)
-    flatten(t.children, result, depth + 1)
+function flatten(items, result = [], depth = 0) {
+  for (let i of items) {
+    i.depth = depth
+    result.push(i)
+    flatten(i.children, result, depth + 1)
   }
   return result
 }
 
-function sortChildrenRecursive(tasks) {
-  for (let t of tasks) {
-    t.children.sort(compareByOrder)
-    t.children.forEach(st => {
+function sortChildrenRecursive(items) {
+  for (let i of items) {
+    i.children.sort(compareByOrder)
+    i.children.forEach(st => {
       sortChildrenRecursive(st.children)
     })
   }
 }
 function compareByOrder(a, b) {
-  return a.order - b.order
+  return a.child_order - b.child_order
 }
