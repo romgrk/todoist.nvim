@@ -2,6 +2,8 @@
 
 > A hopefully usable todoist extension for neovim
 
+![alt text](./static/demo.png)
+
 #### Install
 
 ```vim
@@ -19,8 +21,6 @@ You might need to `npm install`, haven't polished the installation process yet.
 ## Usage
 
 `:TodoistInit`
-
-![alt text](./static/demo.png)
 
 ### Mappings
 
