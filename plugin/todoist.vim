@@ -1,6 +1,7 @@
 "!::exe [So]
 
-" hi def link todoistTitle       Title
+hi! todoistTitle       guifg=white guibg=#e84644 gui=bold
+
 " hi def link todoistCheckbox    Delimiter
 " hi def link todoistContent     Bold
 " hi def link todoistDate        Comment

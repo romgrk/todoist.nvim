@@ -9,15 +9,27 @@ const isToday = require('date-fns/isToday')
 const OFFSET = 2
 const NO_BREAK_SPACE = ' '
 
-async function full(nvim, state) {
-  const lines = [
-    [{ hl: 'todoistTitle', text: '[Inbox]' }],
+const content = {
+  header: [
+    [{ hl: 'todoistTitle', text: '     Inbox     ' }],
     [],
-  ]
+  ],
+  tasks: [],
+}
+
+module.exports = { full, line, lineToTaskIndex }
+
+async function full(nvim, state) {
+  content.tasks = []
 
   for (const t of state.tasks) {
-    lines.push(renderTask(t))
+    content.tasks.push(renderTask(t))
   }
+
+  const lines = [
+    ...content.header,
+    ...content.tasks,
+  ]
 
   await nvim.callFunction('todoist#set_lines', [lines])
 }
@@ -26,18 +38,33 @@ async function line(nvim, state, index) {
   const t = state.tasks[index]
   const parts = renderTask(t)
 
+  content.tasks[index] = parts
+
   await nvim.callFunction('todoist#set_line', [parts, index + OFFSET])
 }
 
 
+function lineToTaskIndex(lineNumber) {
+  return lineNumber - content.header.length
+}
+
+/*
+ * Rendering functions
+ */
+
 function renderTask(t) {
   return [
+    renderIndent(t),
     renderCheckbox(t),
     { hl: 'todoistSeparator', text: ' ' },
     renderContent(t),
     { hl: 'todoistSeparator', text: ' ' },
     renderDueDate(t.due)
   ]
+}
+
+function renderIndent(t) {
+  return { hl: 'Normal', text: ' '.repeat(t.depth * 4) }
 }
 
 function renderCheckbox(t) {
@@ -68,8 +95,10 @@ function renderDueDate(due) {
   return { hl, text: `(${due.date})` }
 }
 
+/*
+ * Helpers
+ */
+
 function isOverdue(date) {
   return date < startOfDay(new Date())
 }
-
-module.exports = { full, line }

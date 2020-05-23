@@ -4,6 +4,7 @@
 
 const TodoistAPI = require('todoist-rest-api').default
 const render = require('./render')
+const { processTasks } = require('./models')
 
 let nvim = undefined
 let todoist = undefined
@@ -33,7 +34,7 @@ async function synchronize() {
 
   state.lastSync = new Date()
   state.projects = projects
-  state.tasks = tasks
+  state.tasks = processTasks(tasks)
 
   console.log(process.pid, { len: state.tasks.length })
 }
@@ -52,6 +53,7 @@ async function createTodoistBuffer() {
     'setfiletype todoist',
     'setlocal buflisted',
     'setlocal buftype=nofile',
+    'setlocal nolist',
     'nnoremap <buffer><silent> x :call Todois__onComplete()<CR>',
   ])
 
@@ -62,23 +64,18 @@ async function createTodoistBuffer() {
 }
 
 async function getCurrentTaskIndex() {
-  const line = await nvim.callFunction('line', ['.']) - 1
-  const offset = 2
-  const index = line - offset
-  return index
+  const zLineNumber = await nvim.callFunction('line', ['.']) - 1
+  return render.lineToTaskIndex(zLineNumber)
 }
 
 async function onComplete() {
   const index = await getCurrentTaskIndex()
   const task = state.tasks[index]
-  console.log(process.pid, { index, task })
   task.completing = true
   let success
   let message
   try {
-    console.log('before render', task)
     await render.line(nvim, state, index)
-    console.log('after render', task)
     if (task.completed === false)
       success = await todoist.v1.task.close(task.id)
     else
@@ -109,13 +106,6 @@ module.exports = plugin => {
   plugin.registerCommand('TodoistInit', pcall(initialize), { sync: false })
 
   plugin.registerFunction('Todois__onComplete', pcall(onComplete), { sync: false })
-
-  /*
-   * plugin.registerFunction('SetLines',() => {
-   *   return plugin.nvim.setLine('May I offer you an egg in these troubling times')
-   *     .then(() => console.log('Line should be set'))
-   * }, {sync: false})
-   */
 
   /*
    * plugin.registerAutocmd('BufEnter', async (fileName) => {
