@@ -74,10 +74,10 @@ function renderIndent(i) {
 function renderCheckbox(i) {
   const hl = i.error ? 'todoistError' : 'todoistCheckbox'
   const text =
-    i.error ?      '  ' :
-    i.completing ? '  ' :
-    i.checked ?    '  ' :
-                   '  '
+    i.loading ? '  ' :
+    i.error ?   '  ' :
+    i.checked ? '  ' :
+                '  '
 
   return { hl, text }
 }

@@ -56,12 +56,15 @@ async function createTodoistBuffer() {
   if (existingBufferId !== -1) {
     await commands([
       'b ' + existingBufferId,
-      'bdelete',
+    ])
+  }
+  else {
+    await commands([
+      'enew',
+      'file Todoist',
     ])
   }
   await commands([
-    'enew',
-    'file Todoist',
     'setfiletype todoist',
     'setlocal buflisted',
     'setlocal buftype=nofile',
@@ -71,6 +74,7 @@ async function createTodoistBuffer() {
     'nnoremap <buffer><silent> o :call Todoist__onCreate(+1)<CR>',
     'nnoremap <buffer><silent> < :call Todoist__onUnindent()<CR>',
     'nnoremap <buffer><silent> > :call Todoist__onIndent()<CR>',
+    'nnoremap <buffer><silent> r :TodoistInit<CR>',
   ])
 
   state.buffer = await nvim.buffer
@@ -91,7 +95,7 @@ async function getCurrentItemIndex() {
 async function onComplete() {
   const index = await getCurrentItemIndex()
   const item = state.items[index]
-  item.completing = true
+  item.loading = true
 
   let success = true
   let message
@@ -108,12 +112,12 @@ async function onComplete() {
   }
 
   if (!success) {
-    item.completing = false
+    item.loading = false
     item.error = true
     state.setErrorMessage(message)
   }
   else {
-    item.completing = false
+    item.loading = false
     item.checked = !item.checked
     item.error = false
     item.errorMessage = undefined
@@ -182,6 +186,8 @@ async function onIndent() {
   console.log('indent', itemUpdate)
 
   try {
+    currentItem.loading = true
+    await render.line(nvim, state, index)
     await todoist.v8.items.move(itemUpdate)
     // await todoist.v8.items.reorder(orders)
     state.setErrorMessage()
@@ -213,6 +219,8 @@ async function onUnindent() {
   console.log('unindent', patch)
 
   try {
+    currentItem.loading = true
+    await render.line(nvim, state, index)
     await todoist.v8.items.move(patch)
     state.setErrorMessage()
   } catch(err) {

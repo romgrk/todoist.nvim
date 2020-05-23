@@ -27,6 +27,11 @@ You might need to `npm install`, haven't polished the installation process yet.
 |Keys|Effect|
 |---|---|
 |`x`|Toggle current task completion|
+|`O`|Add new task before|
+|`o`|Add new task after|
+|`<`|Unindent|
+|`>`|Indent|
+|`r`|Refresh|
 
 ## Missing
 
