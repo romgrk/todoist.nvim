@@ -7,10 +7,10 @@
 #### Install
 
 ```vim
-Plug 'romgrk/todoist.vim', { 'do': 'UpdateRemotePlugins' }
-
 " find your key here: https://todoist.com/prefs/integrations
 let todoist_api_key = 'YOUR_SECRET_KEY'
+
+Plug 'romgrk/todoist.vim', { 'do': 'UpdateRemotePlugins' }
 ```
 
 You might need to `npm install`, haven't polished the installation process yet.
