@@ -11,20 +11,20 @@ endfunc
 
 " Rendering
 
-function! todoist#set_lines (lines, ...)
+function! todoist#set_lines (bufferId, lines, ...)
   let saved_position = getpos('.')
-  call nvim_buf_set_lines(0, 0, -1, v:true, [])
-  call nvim_buf_clear_namespace(0, g:todoist_namespace, 0, -1)
+  call nvim_buf_set_lines(a:bufferId, 0, -1, v:true, [])
+  call nvim_buf_clear_namespace(a:bufferId, g:todoist_namespace, 0, -1)
 
   for parts in a:lines
     call append(line('$'), '')
     let lineNumber = line('$') - 1 - 1
-    call todoist#set_line(parts, lineNumber, v:false)
+    call todoist#set_line(a:bufferId, parts, lineNumber, v:false)
   endfor
   call setpos('.', saved_position)
 endfunc
 
-function! todoist#set_line (parts, lineNumber, clearHighlights)
+function! todoist#set_line (bufferId, parts, lineNumber, clearHighlights)
   let saved_position = getpos('.')
   let zLineNumber = a:lineNumber
   let oLineNumber = a:lineNumber + 1
@@ -32,17 +32,24 @@ function! todoist#set_line (parts, lineNumber, clearHighlights)
 
   if a:clearHighlights
     call nvim_buf_clear_namespace(
-          \ 0,
+          \ a:bufferId,
           \ g:todoist_namespace,
           \ zLineNumber,
           \ zLineNumber + 1)
   end
 
-  call setline(oLineNumber, '')
+  " Clear line
+  call nvim_buf_set_lines(a:bufferId, zLineNumber, zLineNumber + 1, v:true, [''])
+
+  let lineText = ''
+  for part in a:parts
+    let lineText .= part['text']
+  endfor
+  call nvim_buf_set_lines(
+        \ a:bufferId, zLineNumber, zLineNumber + 1, v:true, [lineText])
 
   for part in a:parts
-    call setline(oLineNumber, getline(oLineNumber) . part['text'])
-    call nvim_buf_add_highlight(0,
+    call nvim_buf_add_highlight(a:bufferId,
           \ g:todoist_namespace,
           \ part['hl'],
           \ zLineNumber,

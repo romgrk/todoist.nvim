@@ -31,7 +31,7 @@ async function full(nvim, state) {
     ...content.items,
   ]
 
-  await nvim.callFunction('todoist#set_lines', [lines])
+  await nvim.callFunction('todoist#set_lines', [state.bufferId, lines])
 }
 
 async function line(nvim, state, index) {
@@ -40,7 +40,7 @@ async function line(nvim, state, index) {
 
   content.items[index] = parts
 
-  await nvim.callFunction('todoist#set_line', [parts, index + OFFSET, true])
+  await nvim.callFunction('todoist#set_line', [state.bufferId, parts, index + OFFSET, true])
 }
 
 
@@ -68,7 +68,7 @@ function renderItem(i) {
 }
 
 function renderIndent(i) {
-  return { hl: 'Normal', text: ' '.repeat(i.depth * 4) }
+  return { hl: 'Normal', text: ' '.repeat(i.depth * 2) }
 }
 
 function renderCheckbox(i) {
