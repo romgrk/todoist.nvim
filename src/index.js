@@ -14,7 +14,6 @@ const state = {
   bufferId: undefined,
   buffer: undefined,
 
-  error: false,
   errorMessage: undefined,
 
   projectId: undefined,
@@ -22,8 +21,9 @@ const state = {
   items: [],
 
   setErrorMessage: (errorMessage) => {
-    state.error = Boolean(errorMessage)
     state.errorMessage = errorMessage
+    if (errorMessage)
+      showErrorMessage(errorMessage)
   }
 }
 
@@ -31,8 +31,9 @@ async function initialize() {
   const apiKey = await nvim.getVar('todoist_api_key')
   todoist = Todoist(apiKey)
 
-  await synchronize()
   await createTodoistBuffer()
+  await synchronize()
+  await render.full(nvim, state)
 }
 
 async function synchronize() {
@@ -69,12 +70,16 @@ async function createTodoistBuffer() {
     'setlocal buflisted',
     'setlocal buftype=nofile',
     'setlocal nolist',
-    'nnoremap <buffer><silent> x :call Todoist__onComplete()<CR>',
-    'nnoremap <buffer><silent> O :call Todoist__onCreate(-1)<CR>',
-    'nnoremap <buffer><silent> o :call Todoist__onCreate(+1)<CR>',
-    'nnoremap <buffer><silent> < :call Todoist__onUnindent()<CR>',
-    'nnoremap <buffer><silent> > :call Todoist__onIndent()<CR>',
-    'nnoremap <buffer><silent> r :TodoistInit<CR>',
+    'setlocal nonumber',
+    'nnoremap <buffer><silent> O  :call Todoist__onCreate(-1)<CR>',
+    'nnoremap <buffer><silent> o  :call Todoist__onCreate(+1)<CR>',
+    'nnoremap <buffer><silent> x  :call Todoist__onComplete()<CR>',
+    'nnoremap <buffer><silent> DD :call Todoist__onDelete()<CR>',
+    'nnoremap <buffer><silent> <  :call Todoist__onUnindent()<CR>',
+    'nnoremap <buffer><silent> >  :call Todoist__onIndent()<CR>',
+    'nnoremap <buffer><silent> cc :call Todoist__onChangeContent()<CR>',
+    'nnoremap <buffer><silent> cd :call Todoist__onChangeDate()<CR>',
+    'nnoremap <buffer><silent> r  :TodoistInit<CR>',
   ])
 
   state.buffer = await nvim.buffer
@@ -92,14 +97,51 @@ async function getCurrentItemIndex() {
  * Action handlers
  */
 
+async function onCreate(direction) {
+  const index = await getCurrentItemIndex()
+  const nextIndex = index + +direction
+  const maxIndex = state.items.length - 1
+  const currentItem = state.items[index]
+  const nextItem = state.items[nextIndex < 0 ? 0 : nextIndex > maxIndex ? maxIndex : nextIndex]
+
+  const content = await input('Question', 'Content: ')
+  if (!content)
+    return
+
+  const dueDate = await input('Question', 'Date: ')
+
+  const newItemDraft = {
+    content,
+    due: { string: dueDate },
+    child_order: +currentItem.child_order + +direction,
+    parent_id: nextItem.parent_id,
+  }
+  console.log({newItemDraft, nextIndex, currentItem})
+
+  let newItem
+  try {
+    newItem = await todoist.v8.items.add(newItemDraft)
+    const orders = state.items.map((item, i) => ({ id: item.id, child_order: i }))
+    await todoist.v8.items.reorder(orders)
+    state.setErrorMessage()
+  } catch(err) {
+    state.setErrorMessage(err.message)
+    console.log(err)
+    return
+  }
+
+  await synchronize()
+  await render.full(nvim, state)
+}
+
 async function onComplete() {
   const index = await getCurrentItemIndex()
   const item = state.items[index]
-  item.loading = true
 
   let success = true
   let message
   try {
+    item.loading = true
     await render.line(nvim, state, index)
     if (item.checked)
       await todoist.v8.items.uncomplete({ id: item.id })
@@ -127,37 +169,30 @@ async function onComplete() {
   await render.line(nvim, state, index)
 }
 
-async function onCreate(direction) {
+async function onDelete() {
   const index = await getCurrentItemIndex()
-  const nextIndex = index + +direction
-  const maxIndex = state.items.length - 1
-  const currentItem = state.items[index]
-  const nextItem = state.items[nextIndex < 0 ? 0 : nextIndex > maxIndex ? maxIndex : nextIndex]
+  const item = state.items[index]
 
-  const content = await nvim.callFunction('input', ['Task: '])
-  if (!content)
-    return
-
-  const dueDate = await nvim.callFunction('input', ['Date: '])
-
-  const newItemDraft = {
-    content,
-    due: { string: dueDate },
-    child_order: +currentItem.child_order + +direction,
-    parent_id: nextItem.parent_id,
-  }
-  console.log({newItemDraft, nextIndex, currentItem})
-
-  let newItem
+  let success = true
+  let message
   try {
-    newItem = await todoist.v8.items.add(newItemDraft)
-    const orders = state.items.map((item, i) => ({ id: item.id, child_order: i }))
-    await todoist.v8.items.reorder(orders)
-    state.setErrorMessage()
+    item.loading = true
+    await render.line(nvim, state, index)
+    await todoist.v8.items.delete({ id: item.id })
   } catch(err) {
-    state.setErrorMessage(err.message)
+    success = false
+    message = err.message
     console.log(err)
-    return
+  }
+
+  if (!success) {
+    item.loading = false
+    item.error = true
+    state.setErrorMessage(message)
+  }
+  else {
+    item.loading = false
+    state.setErrorMessage()
   }
 
   await synchronize()
@@ -192,9 +227,9 @@ async function onIndent() {
     // await todoist.v8.items.reorder(orders)
     state.setErrorMessage()
   } catch(err) {
+    currentItem.loading = false
     state.setErrorMessage(err.message)
     console.log(err)
-    return
   }
 
   await synchronize()
@@ -224,9 +259,69 @@ async function onUnindent() {
     await todoist.v8.items.move(patch)
     state.setErrorMessage()
   } catch(err) {
+    currentItem.loading = false
     state.setErrorMessage(err.message)
     console.log(err)
+  }
+
+  await synchronize()
+  await render.full(nvim, state)
+}
+
+async function onChangeContent() {
+  const index = await getCurrentItemIndex()
+  const currentItem = state.items[index]
+
+  const content = await input('Question', 'Content: ', currentItem.content)
+  if (!content || content === currentItem.content)
     return
+
+  const patch = {
+    id: currentItem.id,
+    content,
+  }
+
+  console.log('change-content', patch)
+
+  try {
+    currentItem.loading = true
+    await render.line(nvim, state, index)
+    await todoist.v8.items.update(patch)
+    state.setErrorMessage()
+  } catch(err) {
+    currentItem.loading = false
+    state.setErrorMessage(err.message)
+    console.log(err)
+  }
+
+  await synchronize()
+  await render.full(nvim, state)
+}
+
+async function onChangeDate() {
+  const index = await getCurrentItemIndex()
+  const currentItem = state.items[index]
+
+  const date = await input('Question', 'Date: ')
+  if (!date)
+    return
+
+  const patch = {
+    id: currentItem.id,
+    due: { string: date },
+  }
+
+  console.log('change-date', patch)
+
+  try {
+    currentItem.loading = true
+    await render.line(nvim, state, index)
+    await todoist.v8.items.update(patch)
+    state.setErrorMessage()
+  } catch(err) {
+    currentItem.loading = false
+    state.setErrorMessage(err.message)
+    console.log(err)
   }
 
   await synchronize()
@@ -240,10 +335,13 @@ module.exports = plugin => {
   plugin.setOptions({ dev: false });
   plugin.registerCommand('TodoistInit', pcall(initialize), { sync: false })
 
-  plugin.registerFunction('Todoist__onComplete', pcall(onComplete), { sync: false })
-  plugin.registerFunction('Todoist__onCreate',   pcall(onCreate),   { sync: false })
-  plugin.registerFunction('Todoist__onIndent',   pcall(onIndent),   { sync: false })
-  plugin.registerFunction('Todoist__onUnindent', pcall(onUnindent), { sync: false })
+  plugin.registerFunction('Todoist__onCreate',        pcall(onCreate),        { sync: false })
+  plugin.registerFunction('Todoist__onComplete',      pcall(onComplete),      { sync: false })
+  plugin.registerFunction('Todoist__onDelete',        pcall(onDelete),        { sync: false })
+  plugin.registerFunction('Todoist__onIndent',        pcall(onIndent),        { sync: false })
+  plugin.registerFunction('Todoist__onUnindent',      pcall(onUnindent),      { sync: false })
+  plugin.registerFunction('Todoist__onChangeContent', pcall(onChangeContent), { sync: false })
+  plugin.registerFunction('Todoist__onChangeDate',    pcall(onChangeDate),    { sync: false })
 
   /*
    * plugin.registerAutocmd('BufEnter', async (fileName) => {
@@ -255,10 +353,23 @@ module.exports = plugin => {
 
 // Helpers
 
+async function input(hl, prompt, text) {
+  await commands(['echohl ' + hl])
+  const input = await nvim.callFunction('input', text ? [prompt, text] : [prompt])
+  await commands(['echohl Normal'])
+  return input
+}
+
+async function showErrorMessage(message) {
+  await commands([
+    'echohl todoistErrorMessage',
+    `echo "${message.replace(/"/g, '\\"')}"`,
+    'echohl Normal',
+  ])
+}
+
 async function commands(cmds) {
-  for (let cmd of cmds) {
-    await nvim.command(cmd)
-  }
+  await nvim.callFunction('todoist#commands', [cmds])
 }
 
 function pcall(fn) {

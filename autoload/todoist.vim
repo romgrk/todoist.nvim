@@ -1,5 +1,16 @@
 "!::exe [So]
 
+" Utils
+
+function! todoist#commands (commands)
+  for cmd in a:commands
+    execute cmd
+  endfor
+endfunc
+
+
+" Rendering
+
 function! todoist#set_lines (lines, ...)
   let saved_position = getpos('.')
   call nvim_buf_set_lines(0, 0, -1, v:true, [])
@@ -41,3 +52,5 @@ function! todoist#set_line (parts, lineNumber, clearHighlights)
   endfor
   call setpos('.', saved_position)
 endfunc
+
+

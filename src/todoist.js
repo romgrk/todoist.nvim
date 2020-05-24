@@ -72,11 +72,21 @@ function Todoist(token) {
     const form = { token, commands: stringify([command]) }
     return client(ENDPOINT, { form })
     .then(res => {
-      // const ok = res.body.sync_status[id] === 'ok'
+      console.log(res.body)
+      const ok = res.body.sync_status[id] === 'ok'
+
+      if (!ok) {
+        const status = res.body.sync_status[id]
+        const error = new Error(`${status.error_tag}: ${status.error}`)
+        return Promise.reject(error)
+      }
+
       const newId = res.body.temp_id_mapping[tempId]
+
+      // Ignore the sync_token because we do a sync() right here
       // syncToken = res.body.sync_token
-      return sync()
-      .then(() => {
+
+      return sync().then(() => {
         return data[type + 's'].find(i => i.id === newId)
       })
     })

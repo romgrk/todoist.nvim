@@ -18,4 +18,5 @@ hi! todoistDateToday   guifg=#52E054
 hi! todoistContent          gui=bold
 hi! todoistContentCompleted gui=strikethrough
 
-hi! link todoistError ErrorMsg
+hi! link todoistErrorIcon    ErrorMsg
+hi! link todoistErrorMessage ErrorMsg

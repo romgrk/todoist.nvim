@@ -105,5 +105,5 @@ function renderDueDate(due) {
  */
 
 function isOverdue(date) {
-  return date < startOfDay(new Date())
+  return date < new Date()
 }
