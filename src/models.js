@@ -4,7 +4,7 @@
 
 const { indexBy, prop } = require('rambda')
 
-module.exports = { processItems }
+module.exports = { processItems, compareByOrder }
 
 function processItems(items) {
   const byId = indexBy(prop('id'), items)
@@ -43,6 +43,7 @@ function sortChildrenRecursive(items) {
     })
   }
 }
+
 function compareByOrder(a, b) {
   return a.child_order - b.child_order
 }

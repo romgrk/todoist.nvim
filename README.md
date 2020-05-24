@@ -2,7 +2,7 @@
 
 > A hopefully usable todoist extension for neovim
 
-![alt text](./static/demo.png)
+![alt text](./static/demo.gif)
 
 #### Install
 

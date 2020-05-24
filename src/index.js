@@ -121,8 +121,9 @@ async function onCreate(direction) {
   let newItem
   try {
     newItem = await todoist.v8.items.add(newItemDraft)
-    const orders = state.items.map((item, i) => ({ id: item.id, child_order: i }))
-    await todoist.v8.items.reorder(orders)
+    state.items.splice(nextIndex, 0, newItem)
+    const items = state.items.map((item, i) => ({ id: item.id, child_order: i }))
+    await todoist.v8.items.reorder({ items })
     state.setErrorMessage()
   } catch(err) {
     state.setErrorMessage(err.message)
