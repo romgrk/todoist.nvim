@@ -1,4 +1,4 @@
-# todoist.nvim [WIP]
+# todoist.nvim
 
 > A hopefully usable todoist extension for neovim
 
