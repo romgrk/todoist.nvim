@@ -2,7 +2,7 @@
  * index.js
  */
 
-const Todoist = require('./todoist')
+const Todoist = require('todoist')
 const render = require('./render')
 const { processItems } = require('./models')
 

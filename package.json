@@ -11,8 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "date-fns": "^2.14.0",
-    "got": "^11.1.4",
     "rambda": "^5.4.1",
-    "uuid": "^8.1.0"
+    "todoist": "0.0.1"
   }
 }
