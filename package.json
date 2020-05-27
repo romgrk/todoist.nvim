@@ -12,6 +12,6 @@
   "dependencies": {
     "date-fns": "^2.14.0",
     "rambda": "^5.4.1",
-    "todoist": "0.0.1"
+    "todoist": "^0.2.0"
   }
 }
