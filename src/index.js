@@ -37,10 +37,10 @@ async function initialize() {
 }
 
 async function synchronize() {
-  await todoist.v8.sync()
+  await todoist.sync()
 
-  const projects = todoist.v8.projects.get()
-  const items    = todoist.v8.items.get()
+  const projects = todoist.projects.get()
+  const items    = todoist.items.get()
 
   const mainProject = projects.find(p => p.name === 'Inbox') || projects[0]
 
@@ -120,10 +120,10 @@ async function onCreate(direction) {
 
   let newItem
   try {
-    newItem = await todoist.v8.items.add(newItemDraft)
+    newItem = await todoist.items.add(newItemDraft)
     state.items.splice(nextIndex, 0, newItem)
     const items = state.items.map((item, i) => ({ id: item.id, child_order: i }))
-    await todoist.v8.items.reorder({ items })
+    await todoist.items.reorder({ items })
     state.setErrorMessage()
   } catch(err) {
     state.setErrorMessage(err.message)
@@ -145,9 +145,9 @@ async function onComplete() {
     item.loading = true
     await render.line(nvim, state, index)
     if (item.checked)
-      await todoist.v8.items.uncomplete({ id: item.id })
+      await todoist.items.uncomplete({ id: item.id })
     else
-      await todoist.v8.items.close({ id: item.id })
+      await todoist.items.close({ id: item.id })
   } catch(err) {
     success = false
     message = err.message
@@ -179,7 +179,7 @@ async function onDelete() {
   try {
     item.loading = true
     await render.line(nvim, state, index)
-    await todoist.v8.items.delete({ id: item.id })
+    await todoist.items.delete({ id: item.id })
   } catch(err) {
     success = false
     message = err.message
@@ -224,8 +224,8 @@ async function onIndent() {
   try {
     currentItem.loading = true
     await render.line(nvim, state, index)
-    await todoist.v8.items.move(itemUpdate)
-    // await todoist.v8.items.reorder(orders)
+    await todoist.items.move(itemUpdate)
+    // await todoist.items.reorder(orders)
     state.setErrorMessage()
   } catch(err) {
     currentItem.loading = false
@@ -257,7 +257,7 @@ async function onUnindent() {
   try {
     currentItem.loading = true
     await render.line(nvim, state, index)
-    await todoist.v8.items.move(patch)
+    await todoist.items.move(patch)
     state.setErrorMessage()
   } catch(err) {
     currentItem.loading = false
@@ -287,7 +287,7 @@ async function onChangeContent() {
   try {
     currentItem.loading = true
     await render.line(nvim, state, index)
-    await todoist.v8.items.update(patch)
+    await todoist.items.update(patch)
     state.setErrorMessage()
   } catch(err) {
     currentItem.loading = false
@@ -317,7 +317,7 @@ async function onChangeDate() {
   try {
     currentItem.loading = true
     await render.line(nvim, state, index)
-    await todoist.v8.items.update(patch)
+    await todoist.items.update(patch)
     state.setErrorMessage()
   } catch(err) {
     currentItem.loading = false
