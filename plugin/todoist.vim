@@ -6,7 +6,7 @@
 command! TodoistInstall call <SID>todoist_install()
 
 function! s:todoist_install ()
-  const root = expand('<sfile>:p:h:h')
+  const root = expand('<sfile>:p:h')
   const cmd = printf('cd %s && npm install', root)
   echom "Todoist: Installing dependencies..."
   echom cmd
