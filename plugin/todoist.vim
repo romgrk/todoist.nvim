@@ -7,8 +7,10 @@ command! TodoistInstall call <SID>todoist_install()
 
 function! s:todoist_install ()
   const root = expand('%:p:h:h')
+  const cmd = printf('cd %s && npm install', root)
   echom "Todoist: Installing dependencies..."
-  call system(printf('cd %s && npm install', root))
+  echom cmd
+  call system(cmd)
   echom "Todoist: Updating remote plugins..."
   UpdateRemotePlugins
   echom "Todoist: Done"
