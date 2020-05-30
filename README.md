@@ -23,7 +23,8 @@ command manually to complete the installation.
 #### Requirements
 
  - neovim 0.4.0
- - nodejs 10.0.0 (*NOTE*: due to an issue in the npm `neovim` package, node 12 and up don't work for now [#1](https://github.com/romgrk/todoist.nvim/issues/1))
+ - nodejs 10.0.0
+ - `npm install -g neovim@latest` (**NOTE**: needs to be at v4.9.0 at least!)
 
 Make sure your nodejs provider works (`:checkhealth` to confirm).
 
