@@ -6,19 +6,19 @@
 
 #### Install
 
-```vim
-" find your key here: https://todoist.com/prefs/integrations
-let todoist_api_key = 'YOUR_SECRET_KEY'
+Find your API key here: https://todoist.com/prefs/integrations
 
+```vim
 " NOTE: keep your key in an env var for more safety; you don't want it in your
 "       vim config because you'll end up pushing it to github like I did
-let todoist_api_key = $TODOIST_API_KEY
+let todoist = { 'key': $YOUR_API_KEY }
 
 
-Plug 'romgrk/todoist.vim', { 'do': 'UpdateRemotePlugins' }
+Plug 'romgrk/todoist.vim', { 'do': ':TodoistInstall' }
 ```
 
-You might need to `npm install`, haven't polished the installation process yet.
+If you don't use [vim-plug](https://github.com/junegunn/vim-plug), run the `TodoistInstall`
+command manually to complete the installation.
 
 #### Requirements
 
@@ -45,7 +45,33 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 |`>`|Indent|
 |`r`|Refresh|
 
-## Missing
+### Options
 
- - Everything except listing & completing (re-opening is actually broken)
+Below are the default options:
 
+```vim
+let g:todoist = {
+\  'key': v:null,
+\  'icons': {
+\    'unchecked': ' [ ] ',
+\    'checked':   ' [x] ',
+\    'loading':   ' […] ',
+\    'error':     ' [!] ',
+\  },
+\}
+```
+
+If you have a [NerdFont](https://www.nerdfonts.com/) installed, you can use the icons
+below, that will render like in the gif above.
+
+```vim
+let todoist = {
+\ 'key': $TODOIST_API_KEY,
+\ 'icons': {
+\   'unchecked': '  ',
+\   'checked':   '  ',
+\   'loading':   '  ',
+\   'error':     '  ',
+\ },
+\}
+```
