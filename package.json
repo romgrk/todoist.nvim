@@ -2,7 +2,7 @@
   "name": "todoist.nvim",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "date-fns": "^2.14.0",
+    "deepmerge": "^4.2.2",
     "rambda": "^5.4.1",
     "todoist": "^0.2.0"
   }

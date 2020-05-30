@@ -2,6 +2,8 @@
  * index.js
  */
 
+const fs = require('fs')
+const merge = require('deepmerge')
 const Todoist = require('todoist')
 const render = require('./render')
 const { processItems } = require('./models')
@@ -9,7 +11,19 @@ const { processItems } = require('./models')
 let nvim = undefined
 let todoist = undefined
 
+const defaultOptions = {
+  key: undefined,
+  icons: {
+    unchecked: ' [ ] ',
+    checked:   ' [x] ',
+    loading:   ' […] ',
+    error:     ' [!] ',
+  },
+}
+
 const state = {
+  options: defaultOptions,
+
   lastSync: undefined,
   bufferId: undefined,
   buffer: undefined,
@@ -21,19 +35,33 @@ const state = {
   items: [],
 
   setErrorMessage: (errorMessage) => {
+    if (typeof errorMessage === 'string')
+      errorMessage = [errorMessage]
     state.errorMessage = errorMessage
     if (errorMessage)
       showErrorMessage(errorMessage)
   }
 }
 
+
 async function initialize() {
-  const apiKey = await nvim.getVar('todoist_api_key')
-  todoist = Todoist(apiKey)
+  state.options = merge(defaultOptions, await nvim.eval('get(g:, "todoist", {})'))
+  console.log(state.options)
+
+  if (!state.options.key) {
+    state.setErrorMessage([
+      `Couldn't find API key: make sure to set it:`,
+      `  let g:todoist = { 'key': $MY_TODOIST_API_KEY }`,
+    ])
+  }
 
   await createTodoistBuffer()
-  await synchronize()
-  await render.full(nvim, state)
+
+  if (state.options.key) {
+    todoist = Todoist(state.options.key)
+    await synchronize()
+    await render.full(nvim, state)
+  }
 }
 
 async function synchronize() {
@@ -48,8 +76,6 @@ async function synchronize() {
   state.projectId = mainProject.id
   state.projects = projects
   state.items = processItems(items.filter(i => i.project_id === mainProject.id))
-
-  console.log(process.pid, { len: state.items.length })
 }
 
 async function createTodoistBuffer() {
@@ -71,6 +97,7 @@ async function createTodoistBuffer() {
     'setlocal buftype=nofile',
     'setlocal nolist',
     'setlocal nonumber',
+    'setlocal signcolumn=no',
     'nnoremap <buffer><silent> O  :call Todoist__onCreate(-1)<CR>',
     'nnoremap <buffer><silent> o  :call Todoist__onCreate(+1)<CR>',
     'nnoremap <buffer><silent> x  :call Todoist__onComplete()<CR>',
@@ -127,7 +154,6 @@ async function onCreate(direction) {
     state.setErrorMessage()
   } catch(err) {
     state.setErrorMessage(err.message)
-    console.log(err)
     return
   }
 
@@ -230,7 +256,6 @@ async function onIndent() {
   } catch(err) {
     currentItem.loading = false
     state.setErrorMessage(err.message)
-    console.log(err)
   }
 
   await synchronize()
@@ -262,7 +287,6 @@ async function onUnindent() {
   } catch(err) {
     currentItem.loading = false
     state.setErrorMessage(err.message)
-    console.log(err)
   }
 
   await synchronize()
@@ -292,7 +316,6 @@ async function onChangeContent() {
   } catch(err) {
     currentItem.loading = false
     state.setErrorMessage(err.message)
-    console.log(err)
   }
 
   await synchronize()
@@ -322,7 +345,6 @@ async function onChangeDate() {
   } catch(err) {
     currentItem.loading = false
     state.setErrorMessage(err.message)
-    console.log(err)
   }
 
   await synchronize()
@@ -335,6 +357,7 @@ module.exports = plugin => {
 
   plugin.setOptions({ dev: false });
   plugin.registerCommand('TodoistInit', pcall(initialize), { sync: false })
+  plugin.registerCommand('TodoistEval', pcall(input => eval(input)), { sync: false, nargs: 1 })
 
   plugin.registerFunction('Todoist__onCreate',        pcall(onCreate),        { sync: false })
   plugin.registerFunction('Todoist__onComplete',      pcall(onComplete),      { sync: false })
@@ -351,20 +374,34 @@ module.exports = plugin => {
    */
 };
 
+process.on('uncaughtException', (err, origin) => dumpError({ err, origin }))
+process.on('unhandledRejection', (reason, promise) => dumpError({ reason, promise }))
+
+function dumpError(message) {
+  fs.writeSync('todoist-error.json', JSON.stringify({ message, state }))
+}
+
 
 // Helpers
 
 async function input(hl, prompt, text) {
+  let input = undefined
+
   await commands(['echohl ' + hl])
-  const input = await nvim.callFunction('input', text ? [prompt, text] : [prompt])
+  try {
+    input = await nvim.callFunction('input', text ? [prompt, text] : [prompt])
+  } catch (_) {
+    // ctrl-c interrupt
+  }
   await commands(['echohl Normal'])
   return input
 }
 
-async function showErrorMessage(message) {
+async function showErrorMessage(lines) {
+  console.log('Error', lines)
   await commands([
     'echohl todoistErrorMessage',
-    `echo "${message.replace(/"/g, '\\"')}"`,
+    ...lines.map(m => `echom "Todoist: ${m.replace(/"/g, '\\"')}"`),
     'echohl Normal',
   ])
 }
@@ -379,6 +416,8 @@ function pcall(fn) {
       await fn(...args)
     } catch(e) {
       await nvim.outWriteLine(e.toString())
+      await nvim.outWriteLine(e.stack)
+      dumpError(e)
       throw e
     }
   }
