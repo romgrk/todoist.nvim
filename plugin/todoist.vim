@@ -1,10 +1,25 @@
 "!::exe [So]
 
+"===============================================================================
+" Installation                                                               {{{
+
+command! TodoistInstall call <SID>todoist_install()
+
+function! s:todoist_install ()
+  const root = expand('%:p:h:h')
+  echom "Todoist: Installing dependencies..."
+  call system(printf('cd %s && npm install', root))
+  echom "Todoist: Updating remote plugins..."
+  UpdateRemotePlugins
+  echom "Todoist: Done"
+endfunc
+
+" }}}
+"===============================================================================
+" Highlights                                                                 {{{
+
 " Highlights namespace
 let todoist_namespace = nvim_create_namespace('todoist')
-
-
-" Highlights
 
 " Highlighting function
 function! s:hl (name, ...)
@@ -52,3 +67,7 @@ hi def link todoistDate        Comment
 
 hi def link todoistErrorIcon    ErrorMsg
 hi def link todoistErrorMessage ErrorMsg
+
+" }}}
+"===============================================================================
+
