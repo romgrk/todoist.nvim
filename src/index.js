@@ -128,8 +128,8 @@ async function onCreate(direction) {
   const index = await getCurrentItemIndex()
   const nextIndex = index + +direction
   const maxIndex = state.items.length - 1
-  const currentItem = state.items[index]
-  const nextItem = state.items[nextIndex < 0 ? 0 : nextIndex > maxIndex ? maxIndex : nextIndex]
+  const currentItem = state.items[index] || { child_order: 0 }
+  const nextItem = state.items[nextIndex < 0 ? 0 : nextIndex > maxIndex ? maxIndex : nextIndex] || { parent_id: null }
 
   const content = await input('Question', 'Content: ')
   if (!content)
