@@ -30,7 +30,7 @@ const state = {
 
   errorMessage: undefined,
 
-  projectId: undefined,
+  currentProject: 'Inbox',
   projects: [],
   items: [],
 
@@ -44,9 +44,8 @@ const state = {
 }
 
 
-async function initialize() {
+async function initialize(currentProject = 'Inbox') {
   state.options = merge(defaultOptions, await nvim.eval('get(g:, "todoist", {})'))
-  console.log(state.options)
 
   if (!state.options.key) {
     state.setErrorMessage([
@@ -54,6 +53,9 @@ async function initialize() {
       `  let g:todoist = { 'key': $MY_TODOIST_API_KEY }`,
     ])
   }
+
+  if (currentProject)
+    state.currentProject = currentProject
 
   await createTodoistBuffer()
 
@@ -70,10 +72,10 @@ async function synchronize() {
   const projects = todoist.projects.get()
   const items    = todoist.items.get()
 
-  const mainProject = projects.find(p => p.name === 'Inbox') || projects[0]
+  const mainProject = projects.find(p => p.name === state.currentProject) || projects[0]
 
   state.lastSync = new Date()
-  state.projectId = mainProject.id
+  state.currentProject = mainProject.name
   state.projects = projects
   state.items = processItems(items.filter(i => i.project_id === mainProject.id))
 }
@@ -118,6 +120,16 @@ async function createTodoistBuffer() {
 async function getCurrentItemIndex() {
   const zLineNumber = await nvim.callFunction('line', ['.']) - 1
   return render.lineToItemIndex(zLineNumber)
+}
+
+function listProjects() {
+  return state.projects.map(p => p.name)
+}
+
+function completeProjects(start, line, position) {
+  return state.projects
+    .map(p => p.name)
+    .filter(name => name.toLowerCase().startsWith(start.toLowerCase()))
 }
 
 /*
@@ -355,17 +367,32 @@ async function onChangeDate() {
 module.exports = plugin => {
   nvim = global.nvim = plugin.nvim
 
-  plugin.setOptions({ dev: false });
-  plugin.registerCommand('TodoistInit', pcall(initialize), { sync: false })
-  plugin.registerCommand('TodoistEval', pcall(input => eval(input)), { sync: false, nargs: 1 })
+  const _command  = (...args) => plugin.registerCommand(...args)
+  const _function = (...args) => plugin.registerFunction(...args)
 
-  plugin.registerFunction('Todoist__onCreate',        pcall(onCreate),        { sync: false })
-  plugin.registerFunction('Todoist__onComplete',      pcall(onComplete),      { sync: false })
-  plugin.registerFunction('Todoist__onDelete',        pcall(onDelete),        { sync: false })
-  plugin.registerFunction('Todoist__onIndent',        pcall(onIndent),        { sync: false })
-  plugin.registerFunction('Todoist__onUnindent',      pcall(onUnindent),      { sync: false })
-  plugin.registerFunction('Todoist__onChangeContent', pcall(onChangeContent), { sync: false })
-  plugin.registerFunction('Todoist__onChangeDate',    pcall(onChangeDate),    { sync: false })
+
+  _command('Todoist', pcall(initialize), {
+    sync: false,
+    nargs: '?',
+    complete: 'customlist,Todoist__completeProjects',
+  })
+  _command('TodoistEval', pcall(input => eval(input)), { sync: false, nargs: 1 })
+
+  _function('Todoist__onCreate',         pcall(onCreate),         { sync: false })
+  _function('Todoist__onComplete',       pcall(onComplete),       { sync: false })
+  _function('Todoist__onDelete',         pcall(onDelete),         { sync: false })
+  _function('Todoist__onIndent',         pcall(onIndent),         { sync: false })
+  _function('Todoist__onUnindent',       pcall(onUnindent),       { sync: false })
+  _function('Todoist__onChangeContent',  pcall(onChangeContent),  { sync: false })
+  _function('Todoist__onChangeDate',     pcall(onChangeDate),     { sync: false })
+
+  _function('Todoist__listProjects',     pcallSync(listProjects), { sync: true })
+  _function('Todoist__completeProjects', pcallSync(completeProjects), { sync: true })
+
+  // Deprecated
+
+  _command('TodoistInit', pcall(() =>
+    showWarningMessage('TodoistInit deprecated. Use `:Todoist [project name]` (default "Inbox")')), { sync: false })
 
   /*
    * plugin.registerAutocmd('BufEnter', async (fileName) => {
@@ -374,10 +401,12 @@ module.exports = plugin => {
    */
 };
 
-process.on('uncaughtException', (err, origin) => dumpError({ err, origin }))
-process.on('unhandledRejection', (reason, promise) => dumpError({ reason, promise }))
+process.on('uncaughtException', (error, origin) => dumpError({ error, origin }))
+process.on('unhandledRejection', (error, promise) => dumpError({ error, promise }))
 
 function dumpError(message) {
+  showErrorMessage(message.error.toString())
+  showErrorMessage(message.error.stack)
   fs.writeSync('todoist-error.json', JSON.stringify({ message, state }))
 }
 
@@ -398,9 +427,21 @@ async function input(hl, prompt, text) {
 }
 
 async function showErrorMessage(lines) {
+  if (typeof lines === 'string')
+    lines = [lines]
   console.log('Error', lines)
   await commands([
     'echohl todoistErrorMessage',
+    ...lines.map(m => `echom "Todoist: ${m.replace(/"/g, '\\"')}"`),
+    'echohl Normal',
+  ])
+}
+
+async function showWarningMessage(lines) {
+  if (typeof lines === 'string')
+    lines = [lines]
+  await commands([
+    'echohl todoistWarningMessage',
     ...lines.map(m => `echom "Todoist: ${m.replace(/"/g, '\\"')}"`),
     'echohl Normal',
   ])
@@ -411,15 +452,23 @@ async function commands(cmds) {
 }
 
 function pcall(fn) {
-  return async (...args) => {
+  return async (args = []) => {
     try {
       await fn(...args)
-    } catch(e) {
-      await nvim.outWriteLine(e.toString())
-      await nvim.outWriteLine(e.stack)
-      dumpError(e)
-      throw e
+    } catch(error) {
+      dumpError({ error })
+      throw error
     }
   }
 }
 
+function pcallSync(fn) {
+  return (args = []) => {
+    try {
+      return fn(...args)
+    } catch(error) {
+      dumpError({ error })
+      throw error
+    }
+  }
+}

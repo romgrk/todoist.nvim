@@ -30,7 +30,7 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 
 ## Usage
 
-`:TodoistInit`
+`:Todoist [project_name]` (default: `Inbox`)
 
 ### Mappings
 

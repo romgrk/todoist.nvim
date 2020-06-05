@@ -67,8 +67,10 @@ call s:hl('todoistContentCompleted', '',      '',        'strikethrough')
 hi def link todoistCheckbox    Delimiter
 hi def link todoistDate        Comment
 
-hi def link todoistErrorIcon    ErrorMsg
-hi def link todoistErrorMessage ErrorMsg
+hi def link todoistErrorIcon      ErrorMsg
+hi def link todoistErrorMessage   ErrorMsg
+hi def link todoistWarningMessage WarningMsg
+hi def link todoistMessage        Comment
 
 " }}}
 "===============================================================================

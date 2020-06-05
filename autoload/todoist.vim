@@ -1,5 +1,16 @@
 "!::exe [So]
 
+"===============================================================================
+" External API                                                               {{{
+
+function! todoist#list_projects (...)
+  return Todoist__listProjects()
+endfunc
+
+" }}}
+"===============================================================================
+" Internal API                                                               {{{
+
 " Utils
 
 function! todoist#commands (commands)
@@ -61,3 +72,5 @@ function! todoist#set_line (bufferId, parts, lineNumber, clearHighlights)
 endfunc
 
 
+" }}}
+"===============================================================================
