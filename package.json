@@ -10,9 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "color": "^3.1.2",
     "date-fns": "^2.14.0",
     "deepmerge": "^4.2.2",
     "rambda": "^5.4.1",
-    "todoist": "^0.2.0"
+    "todoist": "^0.3.0"
   }
 }

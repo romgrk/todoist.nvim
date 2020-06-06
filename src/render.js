@@ -61,14 +61,29 @@ function lineToItemIndex(lineNumber) {
  */
 
 function renderHeader(state) {
+  const { currentProjectName, currentProject = {} } = state
+
+  const titleHl = 
+    currentProject.color === 48 && currentProjectName === 'Inbox' ?
+      'todoistTitle' :
+    currentProject.color ?
+      `todoistColor${currentProject.color}` :
+      'todoistTitle'
+
   const title = [{
-    hl: 'todoistTitle',
-    text: centerText(`${state.currentProject} [${state.items.length}]`, 60,' ')
+    hl: titleHl,
+    text: centerText(`${currentProjectName} [${state.items.length}]`, 60,' ')
   }]
+
   const errorMessage = state.errorMessage ?
     state.errorMessage.map(m => [{ hl: 'todoistErrorMessage', text: m }]) : []
-  const otherMessage = state.items.length === 0 ?
-    [[], [{ hl: 'todoistMessage', text: 'No items' }]] : []
+
+  const otherMessage =
+    state.isLoading ?
+      [[{ hl: 'todoistMessage', text: 'Loading…' }]] :
+    state.items.length === 0 ?
+      [[], [{ hl: 'todoistMessage', text: 'No items' }]] : []
+
   return [title, ...errorMessage, ...otherMessage, []]
 }
 

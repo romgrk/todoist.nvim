@@ -3,6 +3,7 @@
  */
 
 const fs = require('fs')
+const Color = require('color')
 const merge = require('deepmerge')
 const Todoist = require('todoist')
 const render = require('./render')
@@ -10,6 +11,7 @@ const { processItems } = require('./models')
 
 let nvim = undefined
 let todoist = undefined
+let didSetup = false
 
 const defaultOptions = {
   key: undefined,
@@ -24,13 +26,15 @@ const defaultOptions = {
 const state = {
   options: defaultOptions,
 
+  isLoading: true,
   lastSync: undefined,
   bufferId: undefined,
   buffer: undefined,
 
   errorMessage: undefined,
 
-  currentProject: 'Inbox',
+  currentProjectName: 'Inbox',
+  currentProject: undefined,
   projects: [],
   items: [],
 
@@ -44,7 +48,7 @@ const state = {
 }
 
 
-async function initialize(currentProject = 'Inbox') {
+async function initialize(currentProjectName = 'Inbox') {
   state.options = merge(defaultOptions, await nvim.eval('get(g:, "todoist", {})'))
 
   if (!state.options.key) {
@@ -54,13 +58,14 @@ async function initialize(currentProject = 'Inbox') {
     ])
   }
 
-  if (currentProject)
-    state.currentProject = currentProject
+  if (currentProjectName)
+    state.currentProjectName = currentProjectName
 
   await createTodoistBuffer()
 
   if (state.options.key) {
     todoist = Todoist(state.options.key)
+    await setupColors()
     await synchronize()
     await render.full(nvim, state)
   }
@@ -72,12 +77,14 @@ async function synchronize() {
   const projects = todoist.projects.get()
   const items    = todoist.items.get()
 
-  const mainProject = projects.find(p => p.name === state.currentProject) || projects[0]
+  const currentProject = projects.find(p => p.name === state.currentProjectName) || projects[0]
 
   state.lastSync = new Date()
-  state.currentProject = mainProject.name
+  state.currentProjectName = currentProject.name
+  state.currentProject = currentProject
   state.projects = projects
-  state.items = processItems(items.filter(i => i.project_id === mainProject.id))
+  state.items = processItems(items.filter(i => i.project_id === currentProject.id))
+  state.isLoading = false
 }
 
 async function createTodoistBuffer() {
@@ -130,6 +137,21 @@ function completeProjects(start, line, position) {
   return state.projects
     .map(p => p.name)
     .filter(name => name.toLowerCase().startsWith(start.toLowerCase()))
+}
+
+async function setupColors() {
+  if (didSetup)
+    return
+  didSetup = true
+
+  const definitions = Object.keys(todoist.colorsById).map(id => {
+    const bg = todoist.colorsById[id]
+    const fg = Color(bg).isLight() ? 'black' : 'white'
+
+    return `hi! todoistColor${id} guifg=${fg} guibg=${bg} gui=bold`
+  })
+
+  await commands(definitions)
 }
 
 /*
