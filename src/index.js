@@ -176,6 +176,7 @@ async function onCreate(direction) {
     due: { string: dueDate },
     child_order: +currentItem.child_order + +direction,
     parent_id: nextItem.parent_id,
+    project_id: state.currentProject.id,
   }
   console.log({newItemDraft, nextIndex, currentItem})
 
