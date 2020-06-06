@@ -4,6 +4,8 @@
 
 ![alt text](./static/demo.gif)
 
+For integration with vim-clap (fuzzy finder) [see below](#integration-with-clap).
+
 #### Install
 
 Find your API key here: https://todoist.com/prefs/integrations
