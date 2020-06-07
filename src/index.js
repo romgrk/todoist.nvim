@@ -21,6 +21,8 @@ const mappings = [
   'nnoremap <buffer><silent> r    :call Todoist__onRefresh()<CR>',
   'nnoremap <buffer><silent> pdd  :call Todoist__onProjectArchive()<CR>',
   'nnoremap <buffer><silent> pDD  :call Todoist__onProjectDelete()<CR>',
+  'nnoremap <buffer><silent> pcc  :call Todoist__onProjectChangeColor(todoist#get_color())<CR>',
+  'nnoremap <buffer><silent> pcn  :call Todoist__onProjectChangeName()<CR>',
 ]
 
 const defaultOptions = {
@@ -100,7 +102,9 @@ async function refresh(options = { sync: sync = false, create: create = false })
   await redraw()
 }
 
-async function redraw() {
+async function redraw(options = { loading: loading = false }) {
+  if (options.loading)
+    state.isLoading = true
   await render.full(nvim, state)
 }
 
@@ -163,14 +167,23 @@ async function setupColors() {
   await commands(definitions)
 }
 
+function setErrorMessage(errorMessage) {
+  if (typeof errorMessage === 'string')
+    errorMessage = [errorMessage]
+
+  if (errorMessage)
+    showErrorMessage(errorMessage)
+
+  state.errorMessage = errorMessage
+}
+
 
 /*
  * Action handlers
  */
 
 async function onRefresh() {
-  state.isLoading = true
-  await redraw()
+  await redraw({ loading: true })
   await refresh({ sync: true })
 }
 
@@ -400,8 +413,7 @@ async function onProjectArchive() {
   if (!todoist.state.user.is_premium)
     return setErrorMessage('Project archiving is only available for premium users :/')
 
-  state.isLoading = true
-  await redraw()
+  await redraw({ loading: true })
 
   try {
     const id = state.currentProject.id
@@ -415,8 +427,7 @@ async function onProjectArchive() {
 }
 
 async function onProjectDelete() {
-  state.isLoading = true
-  await redraw()
+  await redraw({ loading: true })
 
   try {
     const id = state.currentProject.id
@@ -428,6 +439,42 @@ async function onProjectDelete() {
     await refresh()
   }
 }
+
+async function onProjectChangeColor(colorValue) {
+  const color = parseInt(colorValue, 10)
+
+  if (Number.isNaN(color) || color < 30 || color > 49)
+    return
+
+  await redraw({ loading: true })
+
+  try {
+    await todoist.projects.update({ id: state.currentProject.id, color })
+  } catch(err) {
+    setErrorMessage(message)
+  }
+
+  await refresh()
+}
+
+async function onProjectChangeName() {
+  const name = await input('Question', 'New name: ')
+
+  if (!name)
+    return
+
+  await redraw({ loading: true })
+
+  try {
+    await todoist.projects.update({ id: state.currentProject.id, name })
+    state.currentProjectName = name
+  } catch(err) {
+    setErrorMessage(message)
+  }
+
+  await refresh()
+}
+
 
 module.exports = plugin => {
   nvim = global.nvim = plugin.nvim
@@ -443,16 +490,18 @@ module.exports = plugin => {
   })
   _command('TodoistEval', pcall(input => eval(input)), { sync: false, nargs: 1 })
 
-  _function('Todoist__onCreate',         pcall(onCreate),         { sync: false })
-  _function('Todoist__onComplete',       pcall(onComplete),       { sync: false })
-  _function('Todoist__onDelete',         pcall(onDelete),         { sync: false })
-  _function('Todoist__onIndent',         pcall(onIndent),         { sync: false })
-  _function('Todoist__onUnindent',       pcall(onUnindent),       { sync: false })
-  _function('Todoist__onChangeContent',  pcall(onChangeContent),  { sync: false })
-  _function('Todoist__onChangeDate',     pcall(onChangeDate),     { sync: false })
-  _function('Todoist__onRefresh',        pcall(onRefresh),        { sync: false })
-  _function('Todoist__onProjectArchive', pcall(onProjectArchive), { sync: false })
-  _function('Todoist__onProjectDelete',  pcall(onProjectDelete),  { sync: false })
+  _function('Todoist__onCreate',             pcall(onCreate),             { sync: false })
+  _function('Todoist__onComplete',           pcall(onComplete),           { sync: false })
+  _function('Todoist__onDelete',             pcall(onDelete),             { sync: false })
+  _function('Todoist__onIndent',             pcall(onIndent),             { sync: false })
+  _function('Todoist__onUnindent',           pcall(onUnindent),           { sync: false })
+  _function('Todoist__onChangeContent',      pcall(onChangeContent),      { sync: false })
+  _function('Todoist__onChangeDate',         pcall(onChangeDate),         { sync: false })
+  _function('Todoist__onRefresh',            pcall(onRefresh),            { sync: false })
+  _function('Todoist__onProjectArchive',     pcall(onProjectArchive),     { sync: false })
+  _function('Todoist__onProjectDelete',      pcall(onProjectDelete),      { sync: false })
+  _function('Todoist__onProjectChangeColor', pcall(onProjectChangeColor), { sync: false })
+  _function('Todoist__onProjectChangeName',  pcall(onProjectChangeName),  { sync: false })
 
   _function('Todoist__listProjects',     pcallSync(listProjects), { sync: true })
   _function('Todoist__completeProjects', pcallSync(completeProjects), { sync: true })
@@ -492,17 +541,6 @@ async function input(hl, prompt, text) {
   }
   await commands(['echohl Normal'])
   return input
-}
-
-
-function setErrorMessage(errorMessage) {
-  if (typeof errorMessage === 'string')
-    errorMessage = [errorMessage]
-
-  if (errorMessage)
-    showErrorMessage(errorMessage)
-
-  state.errorMessage = errorMessage
 }
 
 async function showErrorMessage(lines) {

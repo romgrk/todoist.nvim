@@ -47,6 +47,8 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 |`<`|Unindent|
 |`>`|Indent|
 |`r`|Refresh|
+|`pcc`|Change current project color|
+|`pcn`|Change current project name|
 |`pdd`|Archive current project *premium users only :/*|
 |`pDD`|Delete current project|
 

@@ -19,6 +19,22 @@ function! todoist#commands (commands)
   endfor
 endfunc
 
+function! todoist#get_color ()
+  redraw
+  for colorNumber in range(30, 49)
+    if colorNumber == 40
+      echom ''
+    end
+    exe 'echohl todoistColor' . colorNumber
+    echon ' ' . colorNumber . ' '
+    echohl Normal
+    echon "\t"
+  endfor
+  echohl Question
+  let color = input('Color: ')
+  echohl Normal
+  return color
+endfunc
 
 " Rendering
 
