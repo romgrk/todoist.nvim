@@ -211,6 +211,7 @@ async function onCreate(direction) {
 
   let newItem
   try {
+    await redraw({ loading: true })
     newItem = await todoist.items.add(newItemDraft)
     state.items.splice(nextIndex, 0, newItem)
     const items = state.items.map((item, i) => ({ id: item.id, child_order: i }))
