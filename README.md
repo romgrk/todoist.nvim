@@ -32,7 +32,7 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 
 ## Usage
 
-`:Todoist [project_name]` (default: `Inbox`)
+`:Todoist [project_name]` (default: `Inbox`. Creates project if it doesn't exist)
 
 ### Mappings
 
@@ -47,6 +47,8 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 |`<`|Unindent|
 |`>`|Indent|
 |`r`|Refresh|
+|`pdd`|Archive current project *premium users only :/*|
+|`pDD`|Delete current project|
 
 ### Options
 

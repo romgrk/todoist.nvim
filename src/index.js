@@ -9,9 +9,19 @@ const Todoist = require('todoist')
 const render = require('./render')
 const { processItems } = require('./models')
 
-let nvim = undefined
-let todoist = undefined
-let didSetup = false
+const mappings = [
+  'nnoremap <buffer><silent> O    :call Todoist__onCreate(-1)<CR>',
+  'nnoremap <buffer><silent> o    :call Todoist__onCreate(+1)<CR>',
+  'nnoremap <buffer><silent> x    :call Todoist__onComplete()<CR>',
+  'nnoremap <buffer><silent> DD   :call Todoist__onDelete()<CR>',
+  'nnoremap <buffer><silent> <    :call Todoist__onUnindent()<CR>',
+  'nnoremap <buffer><silent> >    :call Todoist__onIndent()<CR>',
+  'nnoremap <buffer><silent> cc   :call Todoist__onChangeContent()<CR>',
+  'nnoremap <buffer><silent> cd   :call Todoist__onChangeDate()<CR>',
+  'nnoremap <buffer><silent> r    :call Todoist__onRefresh()<CR>',
+  'nnoremap <buffer><silent> pdd  :call Todoist__onProjectArchive()<CR>',
+  'nnoremap <buffer><silent> pDD  :call Todoist__onProjectDelete()<CR>',
+]
 
 const defaultOptions = {
   key: undefined,
@@ -21,71 +31,77 @@ const defaultOptions = {
     loading:   ' […] ',
     error:     ' [!] ',
   },
+  defaultProject: 'Inbox',
 }
 
 const state = {
   options: defaultOptions,
 
   isLoading: true,
-  lastSync: undefined,
   bufferId: undefined,
   buffer: undefined,
 
   errorMessage: undefined,
 
-  currentProjectName: 'Inbox',
+  currentProjectName: undefined,
   currentProject: undefined,
   projects: [],
   items: [],
-
-  setErrorMessage: (errorMessage) => {
-    if (typeof errorMessage === 'string')
-      errorMessage = [errorMessage]
-    state.errorMessage = errorMessage
-    if (errorMessage)
-      showErrorMessage(errorMessage)
-  }
 }
 
+let nvim = undefined
+let todoist = undefined
+let didSetup = false
 
-async function initialize(currentProjectName = state.currentProjectName) {
+
+async function initialize(currentProjectName) {
   state.options = merge(defaultOptions, await nvim.eval('get(g:, "todoist", {})'))
   state.isLoading = state.options.key ? true : false
+  state.currentProjectName = currentProjectName || state.options.defaultProject
 
   if (!state.options.key) {
-    state.setErrorMessage([
+    setErrorMessage([
       `Couldn't find API key: make sure to set it:`,
       `  let g:todoist = { 'key': $MY_TODOIST_API_KEY }`,
     ])
   }
 
-  if (currentProjectName)
-    state.currentProjectName = currentProjectName
-
   await createTodoistBuffer()
+
+  let refreshOptions = undefined
 
   if (state.options.key) {
     todoist = Todoist(state.options.key)
     await setupColors()
-    await synchronize()
-    await render.full(nvim, state)
+    refreshOptions = { sync: true, create: true }
   }
+
+  await refresh(refreshOptions)
 }
 
-async function synchronize() {
-  await todoist.sync()
+async function refresh(options = { sync: sync = false, create: create = false }) {
+  if (options.sync)
+    await todoist.sync()
 
   const projects = todoist.projects.get()
   const items    = todoist.items.get()
 
-  const currentProject = projects.find(p => p.name === state.currentProjectName) || projects[0]
+  if (options.create && !projects.some(p => p.name === state.currentProjectName))
+    await todoist.projects.add({ name: state.currentProjectName })
 
-  state.lastSync = new Date()
+  const currentProject = todoist.projects.get().find(p => p.name === state.currentProjectName) || projects[0]
+
   state.currentProjectName = currentProject.name
   state.currentProject = currentProject
   state.projects = projects
   state.items = processItems(items.filter(i => i.project_id === currentProject.id))
   state.isLoading = false
+
+  await redraw()
+}
+
+async function redraw() {
+  await render.full(nvim, state)
 }
 
 async function createTodoistBuffer() {
@@ -108,15 +124,7 @@ async function createTodoistBuffer() {
     'setlocal nolist',
     'setlocal nonumber',
     'setlocal signcolumn=no',
-    'nnoremap <buffer><silent> O  :call Todoist__onCreate(-1)<CR>',
-    'nnoremap <buffer><silent> o  :call Todoist__onCreate(+1)<CR>',
-    'nnoremap <buffer><silent> x  :call Todoist__onComplete()<CR>',
-    'nnoremap <buffer><silent> DD :call Todoist__onDelete()<CR>',
-    'nnoremap <buffer><silent> <  :call Todoist__onUnindent()<CR>',
-    'nnoremap <buffer><silent> >  :call Todoist__onIndent()<CR>',
-    'nnoremap <buffer><silent> cc :call Todoist__onChangeContent()<CR>',
-    'nnoremap <buffer><silent> cd :call Todoist__onChangeDate()<CR>',
-    'nnoremap <buffer><silent> r  :Todoist<CR>',
+    ...mappings
   ])
 
   state.buffer = await nvim.buffer
@@ -155,9 +163,16 @@ async function setupColors() {
   await commands(definitions)
 }
 
+
 /*
  * Action handlers
  */
+
+async function onRefresh() {
+  state.isLoading = true
+  await redraw()
+  await refresh({ sync: true })
+}
 
 async function onCreate(direction) {
   const index = await getCurrentItemIndex()
@@ -187,14 +202,13 @@ async function onCreate(direction) {
     state.items.splice(nextIndex, 0, newItem)
     const items = state.items.map((item, i) => ({ id: item.id, child_order: i }))
     await todoist.items.reorder({ items })
-    state.setErrorMessage()
+    setErrorMessage()
   } catch(err) {
-    state.setErrorMessage(err.message)
+    setErrorMessage(err.message)
     return
   }
 
-  await synchronize()
-  await render.full(nvim, state)
+  await refresh()
 }
 
 async function onComplete() {
@@ -219,14 +233,14 @@ async function onComplete() {
   if (!success) {
     item.loading = false
     item.error = true
-    state.setErrorMessage(message)
+    setErrorMessage(message)
   }
   else {
     item.loading = false
     item.checked = !item.checked
     item.error = false
     item.errorMessage = undefined
-    state.setErrorMessage()
+    setErrorMessage()
   }
 
   await render.line(nvim, state, index)
@@ -251,15 +265,14 @@ async function onDelete() {
   if (!success) {
     item.loading = false
     item.error = true
-    state.setErrorMessage(message)
+    setErrorMessage(message)
   }
   else {
     item.loading = false
-    state.setErrorMessage()
+    setErrorMessage()
   }
 
-  await synchronize()
-  await render.full(nvim, state)
+  await refresh()
 }
 
 async function onIndent() {
@@ -288,14 +301,13 @@ async function onIndent() {
     await render.line(nvim, state, index)
     await todoist.items.move(itemUpdate)
     // await todoist.items.reorder(orders)
-    state.setErrorMessage()
+    setErrorMessage()
   } catch(err) {
     currentItem.loading = false
-    state.setErrorMessage(err.message)
+    setErrorMessage(err.message)
   }
 
-  await synchronize()
-  await render.full(nvim, state)
+  await refresh()
 }
 
 async function onUnindent() {
@@ -319,14 +331,13 @@ async function onUnindent() {
     currentItem.loading = true
     await render.line(nvim, state, index)
     await todoist.items.move(patch)
-    state.setErrorMessage()
+    setErrorMessage()
   } catch(err) {
     currentItem.loading = false
-    state.setErrorMessage(err.message)
+    setErrorMessage(err.message)
   }
 
-  await synchronize()
-  await render.full(nvim, state)
+  await refresh()
 }
 
 async function onChangeContent() {
@@ -348,14 +359,13 @@ async function onChangeContent() {
     currentItem.loading = true
     await render.line(nvim, state, index)
     await todoist.items.update(patch)
-    state.setErrorMessage()
+    setErrorMessage()
   } catch(err) {
     currentItem.loading = false
-    state.setErrorMessage(err.message)
+    setErrorMessage(err.message)
   }
 
-  await synchronize()
-  await render.full(nvim, state)
+  await refresh()
 }
 
 async function onChangeDate() {
@@ -377,16 +387,47 @@ async function onChangeDate() {
     currentItem.loading = true
     await render.line(nvim, state, index)
     await todoist.items.update(patch)
-    state.setErrorMessage()
+    setErrorMessage()
   } catch(err) {
     currentItem.loading = false
-    state.setErrorMessage(err.message)
+    setErrorMessage(err.message)
   }
 
-  await synchronize()
-  await render.full(nvim, state)
+  await refresh()
 }
 
+async function onProjectArchive() {
+  if (!todoist.state.user.is_premium)
+    return setErrorMessage('Project archiving is only available for premium users :/')
+
+  state.isLoading = true
+  await redraw()
+
+  try {
+    const id = state.currentProject.id
+    await todoist.projects.archive({ id })
+    await initialize(state.options.defaultProject)
+  } catch(err) {
+    setErrorMessage(message)
+    state.isLoading = false
+    await refresh()
+  }
+}
+
+async function onProjectDelete() {
+  state.isLoading = true
+  await redraw()
+
+  try {
+    const id = state.currentProject.id
+    await todoist.projects.delete({ id })
+    await initialize(state.options.defaultProject)
+  } catch(err) {
+    setErrorMessage(message)
+    state.isLoading = false
+    await refresh()
+  }
+}
 
 module.exports = plugin => {
   nvim = global.nvim = plugin.nvim
@@ -409,6 +450,9 @@ module.exports = plugin => {
   _function('Todoist__onUnindent',       pcall(onUnindent),       { sync: false })
   _function('Todoist__onChangeContent',  pcall(onChangeContent),  { sync: false })
   _function('Todoist__onChangeDate',     pcall(onChangeDate),     { sync: false })
+  _function('Todoist__onRefresh',        pcall(onRefresh),        { sync: false })
+  _function('Todoist__onProjectArchive', pcall(onProjectArchive), { sync: false })
+  _function('Todoist__onProjectDelete',  pcall(onProjectDelete),  { sync: false })
 
   _function('Todoist__listProjects',     pcallSync(listProjects), { sync: true })
   _function('Todoist__completeProjects', pcallSync(completeProjects), { sync: true })
@@ -448,6 +492,17 @@ async function input(hl, prompt, text) {
   }
   await commands(['echohl Normal'])
   return input
+}
+
+
+function setErrorMessage(errorMessage) {
+  if (typeof errorMessage === 'string')
+    errorMessage = [errorMessage]
+
+  if (errorMessage)
+    showErrorMessage(errorMessage)
+
+  state.errorMessage = errorMessage
 }
 
 async function showErrorMessage(lines) {
