@@ -34,6 +34,7 @@ const defaultOptions = {
     error:     ' [!] ',
   },
   defaultProject: 'Inbox',
+  useMarkdownSyntax: true,
 }
 
 const state = {
@@ -128,6 +129,7 @@ async function createTodoistBuffer() {
     'setlocal nolist',
     'setlocal nonumber',
     'setlocal signcolumn=no',
+    'setlocal conceallevel=2',
     ...mappings
   ])
 

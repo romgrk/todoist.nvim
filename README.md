@@ -65,6 +65,8 @@ let g:todoist = {
 \    'loading':   ' […] ',
 \    'error':     ' [!] ',
 \  },
+\  'defaultProject': 'Inbox',
+\  'useMarkdownSyntax': v:true,
 \}
 ```
 
