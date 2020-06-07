@@ -130,13 +130,14 @@ async function createTodoistBuffer() {
     'setlocal nonumber',
     'setlocal signcolumn=no',
     'setlocal conceallevel=2',
-    ...mappings
+    ...mappings,
   ])
 
   state.buffer = await nvim.buffer
   state.bufferId = await state.buffer.id
 
   await render.full(nvim, state)
+  await commands(['normal! 3gg'])
 }
 
 async function getCurrentItemIndex() {
