@@ -48,8 +48,9 @@ const state = {
 }
 
 
-async function initialize(currentProjectName = 'Inbox') {
+async function initialize(currentProjectName = state.currentProjectName) {
   state.options = merge(defaultOptions, await nvim.eval('get(g:, "todoist", {})'))
+  state.isLoading = state.options.key ? true : false
 
   if (!state.options.key) {
     state.setErrorMessage([
@@ -115,7 +116,7 @@ async function createTodoistBuffer() {
     'nnoremap <buffer><silent> >  :call Todoist__onIndent()<CR>',
     'nnoremap <buffer><silent> cc :call Todoist__onChangeContent()<CR>',
     'nnoremap <buffer><silent> cd :call Todoist__onChangeDate()<CR>',
-    'nnoremap <buffer><silent> r  :TodoistInit<CR>',
+    'nnoremap <buffer><silent> r  :Todoist<CR>',
   ])
 
   state.buffer = await nvim.buffer

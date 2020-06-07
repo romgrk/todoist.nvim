@@ -80,11 +80,19 @@ function renderHeader(state) {
 
   const otherMessage =
     state.isLoading ?
-      [[{ hl: 'todoistMessage', text: 'Loading…' }]] :
-    state.items.length === 0 ?
-      [[], [{ hl: 'todoistMessage', text: 'No items' }]] : []
+      [[{ hl: 'todoistMessage', text: 'Loading…' }]] : []
 
-  return [title, ...errorMessage, ...otherMessage, []]
+  const emptyMessage =
+    state.items.length === 0 && !state.isLoading ?
+      [[{ hl: 'todoistMessage', text: 'No items' }]] : []
+
+  const lines = [title]
+  lines.push(...errorMessage)
+  lines.push(...otherMessage)
+  lines.push(...emptyMessage)
+  if (lines.length < 2)
+    lines.push([])
+  return lines
 }
 
 function renderItem(state, i) {
