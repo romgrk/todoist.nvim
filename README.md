@@ -16,7 +16,7 @@ Find your API key here: https://todoist.com/prefs/integrations
 let todoist = { 'key': $YOUR_API_KEY }
 
 
-Plug 'romgrk/todoist.vim', { 'do': ':TodoistInstall' }
+Plug 'romgrk/todoist.nvim', { 'do': ':TodoistInstall' }
 ```
 
 If you don't use [vim-plug](https://github.com/junegunn/vim-plug), run the `TodoistInstall`
