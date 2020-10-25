@@ -72,7 +72,7 @@ function renderHeader(state) {
 
   const title = [{
     hl: titleHl,
-    text: centerText(`${currentProjectName} [${state.items.length}]`, 60,' ')
+    text: ` ${currentProjectName} (${state.items.length} tasks) `,
   }]
 
   const errorMessage = state.errorMessage ?
