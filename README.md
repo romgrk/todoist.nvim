@@ -10,12 +10,12 @@ For integration with vim-clap (fuzzy finder) [see below](#integration-with-clap)
 
 Find your API key here: https://todoist.com/prefs/integrations
 
+Export it in your `~/.config/environment.d/*.conf`/`~/.profile`/`~/.bashrc`:
+```bash
+export TODOIST_API_KEY=xxxxxxxx
+```
+
 ```vim
-" NOTE: keep your key in an env var for more safety; you don't want it in your
-"       vim config because you'll end up pushing it to github like I did
-let todoist = { 'key': $YOUR_API_KEY }
-
-
 Plug 'romgrk/todoist.nvim', { 'do': ':TodoistInstall' }
 ```
 
@@ -58,7 +58,6 @@ Below are the default options:
 
 ```vim
 let g:todoist = {
-\  'key': v:null,
 \  'icons': {
 \    'unchecked': ' [ ] ',
 \    'checked':   ' [x] ',
@@ -74,8 +73,10 @@ If you have a [NerdFont](https://www.nerdfonts.com/) installed, you can use the 
 below, that will render like in the gif above.
 
 ```vim
+" NOTE: keep your key in an env var for more safety; you don't want it in your
+"       vim config because you'll end up pushing it to github like I did
+
 let todoist = {
-\ 'key': $TODOIST_API_KEY,
 \ 'icons': {
 \   'unchecked': '  ',
 \   'checked':   '  ',

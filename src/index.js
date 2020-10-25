@@ -8,6 +8,7 @@ const merge = require('deepmerge')
 const Todoist = require('todoist')
 const render = require('./render')
 const { processItems } = require('./models')
+const k = require('./constants')
 
 const mappings = [
   'nnoremap <buffer><silent> O    :call Todoist__onCreate(-1)<CR>',
@@ -59,13 +60,16 @@ let didSetup = false
 
 async function initialize(currentProjectName) {
   state.options = merge(defaultOptions, await nvim.eval('get(g:, "todoist", {})'))
+  if (state.options.key)
+    deprecated(k.DEPRECATED_KEY)
+  state.options.key = state.options.key || process.env.TODOIST_API_KEY
   state.isLoading = state.options.key ? true : false
   state.currentProjectName = currentProjectName || state.options.defaultProject
 
   if (!state.options.key) {
     setErrorMessage([
-      `Couldn't find API key: make sure to set it:`,
-      `  let g:todoist = { 'key': $MY_TODOIST_API_KEY }`,
+      `Couldn't find API key: define it in your .profile or .bashrc:`,
+      `  export TODOIST_API_KEY=xxxxxxxx`,
     ])
   }
 
@@ -566,6 +570,15 @@ async function showWarningMessage(lines) {
     ...lines.map(m => `echom "Todoist: ${m.replace(/"/g, '\\"')}"`),
     'echohl Normal',
   ])
+}
+
+const shownDeprecatedMessages = new Set()
+
+function deprecated(message) {
+  if (shownDeprecatedMessages.has(message))
+    return
+  shownDeprecatedMessages.add(message)
+  setTimeout(() => showWarningMessage(message), 200)
 }
 
 async function commands(cmds) {
