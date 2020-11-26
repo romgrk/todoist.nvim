@@ -534,6 +534,7 @@ module.exports = plugin => {
   _function('Todoist__onUnindent',           pcall(onUnindent),           { sync: false })
   _function('Todoist__onChangeContent',      pcall(onChangeContent),      { sync: false })
   _function('Todoist__onChangeDate',         pcall(onChangeDate),         { sync: false })
+  _function('Todoist__onChangePriority',     pcall(onChangePriority),     { sync: false })
   _function('Todoist__onRefresh',            pcall(onRefresh),            { sync: false })
   _function('Todoist__onProjectArchive',     pcall(onProjectArchive),     { sync: false })
   _function('Todoist__onProjectDelete',      pcall(onProjectDelete),      { sync: false })
