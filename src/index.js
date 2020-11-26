@@ -24,7 +24,7 @@ const mappings = [
   'nnoremap <buffer><silent> pDD  :call Todoist__onProjectDelete()<CR>',
   'nnoremap <buffer><silent> pcc  :call Todoist__onProjectChangeColor(todoist#get_color())<CR>',
   'nnoremap <buffer><silent> pcn  :call Todoist__onProjectChangeName()<CR>',
-  'nnoremap <buffer><silent> ppp  :call Todoist__onProjectChangePriority()<CR>',
+  'nnoremap <buffer><silent> ppp  :call Todoist__onChangePriority()<CR>',
 ]
 
 const defaultOptions = {
