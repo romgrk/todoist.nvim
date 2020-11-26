@@ -24,7 +24,10 @@ const mappings = [
   'nnoremap <buffer><silent> pDD  :call Todoist__onProjectDelete()<CR>',
   'nnoremap <buffer><silent> pcc  :call Todoist__onProjectChangeColor(todoist#get_color())<CR>',
   'nnoremap <buffer><silent> pcn  :call Todoist__onProjectChangeName()<CR>',
-  'nnoremap <buffer><silent> ppp  :call Todoist__onChangePriority()<CR>',
+  'nnoremap <buffer><silent> p4  :call Todoist__onChangePriority(1)<CR>',
+  'nnoremap <buffer><silent> p3  :call Todoist__onChangePriority(2)<CR>',
+  'nnoremap <buffer><silent> p2  :call Todoist__onChangePriority(3)<CR>',
+  'nnoremap <buffer><silent> p1  :call Todoist__onChangePriority(4)<CR>',
 ]
 
 const defaultOptions = {
@@ -390,12 +393,11 @@ async function onChangeContent() {
   await refresh()
 }
 
-async function onChangePriority() {
+async function onChangePriority(priority) {
   const index = await getCurrentItemIndex()
   const currentItem = state.items[index]
 
-  const priority = await input('Question', 'Priority: ', currentItem.priority)
-  if (!priority || priority === currentItem.priority)
+  if (priority === currentItem.priority)
     return
 
   const patch = {
