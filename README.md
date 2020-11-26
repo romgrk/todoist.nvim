@@ -10,9 +10,17 @@ For integration with vim-clap (fuzzy finder) [see below](#integration-with-clap)
 
 Find your API key here: https://todoist.com/prefs/integrations
 
-Export it in your `~/.config/environment.d/*.conf`/`~/.profile`/`~/.bashrc`:
+For security reasons, it is recommended to use [pass](https://www.passwordstore.org/) to store it:
+
 ```bash
-export TODOIST_API_KEY=xxxxxxxx
+$ pass insert Todoist/API
+Enter password for Todoist/API: XXXXXXXXX
+```
+
+Export it in your `~/.config/environment.d/*.conf`/`~/.profile`/`~/.bashrc`
+
+```bash
+export TODOIST_API_KEY="$(pass Todoist/API)"
 ```
 
 ```vim
