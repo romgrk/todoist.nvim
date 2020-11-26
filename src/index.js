@@ -24,6 +24,7 @@ const mappings = [
   'nnoremap <buffer><silent> pDD  :call Todoist__onProjectDelete()<CR>',
   'nnoremap <buffer><silent> pcc  :call Todoist__onProjectChangeColor(todoist#get_color())<CR>',
   'nnoremap <buffer><silent> pcn  :call Todoist__onProjectChangeName()<CR>',
+  'nnoremap <buffer><silent> ppp  :call Todoist__onProjectChangePriority()<CR>',
 ]
 
 const defaultOptions = {
@@ -375,6 +376,34 @@ async function onChangeContent() {
   }
 
   console.log('change-content', patch)
+
+  try {
+    currentItem.loading = true
+    await render.line(nvim, state, index)
+    await todoist.items.update(patch)
+    setErrorMessage()
+  } catch(err) {
+    currentItem.loading = false
+    setErrorMessage(err.message)
+  }
+
+  await refresh()
+}
+
+async function onChangePriority() {
+  const index = await getCurrentItemIndex()
+  const currentItem = state.items[index]
+
+  const priority = await input('Question', 'Priority: ')
+  if (!priority)
+    return
+
+  const patch = {
+    id: currentItem.id,
+    pri: { integer: priority },
+  }
+
+  console.log('change-priority', patch)
 
   try {
     currentItem.loading = true
