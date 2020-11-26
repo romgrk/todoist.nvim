@@ -1,0 +1,153 @@
+*todoist.txt* A hopefully usable todoist extension for neovim
+
+Author: Rom Grk (https://github.com/romgrk)
+License: Same as Neovim (|license|)
+
+INTRODUCTION                                                          *todoist*
+
+Todoist is a common Todo productivity application. The most common way
+to interact with it is through it's default application which isn't as text
+friendly as one would hope.
+
+TABLE OF CONTENTS                                            *todoist-contents*
+
+INTRODUCTION..........................................................|todoist|
+TABLE OF CONTENTS............................................|todoist-contents|
+INSTALLATION.............................................|todoist-installation|
+REQUIREMENTS.............................................|todoist-requirements|
+USAGE...........................................................|todoist-usage|
+MAPPINGS.....................................................|todoist-mappings|
+OPTIONS.......................................................|todoist-options|
+INTEGRATION...............................................|todoist-integration|
+OTHER...........................................................|todoist-other|
+ABOUT...........................................................|todoist-about|
+
+INSTALLATION                                             *todoist-installation*
+
+Once the plugin is installed, vim needs access to your Todoist API key which
+is available here: https://todoist.com/prefs/integrations
+
+Once you have it, make it available to vim by setting it as a shell variable
+(whether that be in your `~/.profile`, `~/.bashrc`, etc...):
+
+  It is recommended to hide it using pass ():
+  `$ pass insert Todoist/API`
+  `  Enter password for test: xxxxxxxx`
+  And then store it:
+  `export TODOIST_API_KEY=$(pass Todoist/API`)`
+
+  Otherwise:
+  `export TODOIST_API_KEY=xxxxxxxx`
+
+REQUIREMENTS                                             *todoist-requirements*
+
+- Neovim >= 0.4.0
+- Nodejs >= 10.0.0
+- `npm install -g neovim@latest` (NOTE: needs to be V4.9.0 at least)
+
+USAGE                                                           *todoist-usage*
+
+`:Todoist [project_name]`
+If no project name is given, the default (`INBOX`) will be used.
+
+MAPPINGS                                                     *todoist-mappings*
+
+                                                *todoist_x*
+x                       Toggle current task completion.
+
+                                               *todoist_cc*
+cc                      Change the current tasks' text.
+
+                                               *todoist_cd*
+cd                      Change the current task date (see |todoist-other|).
+
+                                               *todoist_DD*
+DD                      Delete the current task.
+
+                                                *todoist_O*
+O                       Add new task before the cursor.
+
+                                                *todoist_o*
+o                       Add new task after the cursor.
+
+                                                *todoist_<*
+<                       Unindent the current task.
+
+                                                *todoist_>*
+>                       Indent the current task.
+
+                                                *todoist_r*
+r                       Refresh the Todoist session.
+
+                                              *todoist_pcc*
+pcc                     Change the current projects' color.
+
+                                              *todoist_pcn*
+pcn                     Change the current projects' name.
+
+                                              *todoist_pdd*
+pdd                     Archive the current project.
+                        (Premium users only :/)
+
+                                              *todoist_pDD*
+pDD                     Delete the current project.
+
+OPTIONS                                                       *todoist-options*
+
+Below is the default configuration:
+
+  `let g:todoist = {`
+  `\  'icons': {`
+  `\    'unchecked': ' [ ] ',`
+  `\    'checked':   ' [x] ',`
+  `\    'loading':   ' […] ',`
+  `\    'error':     ' [!] ',`
+  `\  },`
+  `\  'defaultProject': 'Inbox',`
+  `\  'useMarkdownSyntax': v:true,`
+  `\}`
+
+If you have Nerdfont installed (see |todoist-other|), then you can use the
+icons below to render your list in a manner which is more aesthetically
+pleasing:
+
+  `let todoist = {`
+  `\ 'icons': {`
+  `\   'unchecked': '  ',`
+  `\   'checked':   '  ',`
+  `\   'loading':   '  ',`
+  `\   'error':     '  ',`
+  `\ },`
+  `\}`
+
+INTEGRATION                                               *todoist-integration*
+
+If you're using vim-clap (see |todoist-other|), you can integrate project
+selection by adding this to your config files:
+
+  `let clap_provider_todoist = {`
+  `\ 'source': {-> Todoist__listProjects()},`
+  `\ 'sink': 'Todoist',`
+  `\}`
+
+OTHER                                                           *todoist-other*
+
+Date formatting with Todoist:
+https://get.todoist.help/hc/en-us/articles/205325931-Due-Dates-Times
+
+Nerdfont, icons within fonts:
+https://www.nerdfonts.com/
+
+Vim-clap, a modern generic interactive finder and dispatcher:
+https://github.com/liuchengxu/vim-clap
+
+Pass, the standard unix passwork manager:
+https://www.passwordstore.org/
+
+ABOUT                                                           *todoist-about*
+
+Grab the latest version or report a bug on GitHub:
+
+https://github.com/romgrk/todoist.nvim
+
+ vim:tw=78:et:ft=help:norl:
