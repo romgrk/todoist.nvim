@@ -9,7 +9,18 @@ Todoist is a common Todo productivity application. The most common way
 to interact with it is through it's default application which isn't as text
 friendly as one would hope.
 
+TABLE OF CONTENTS                                            *todoist-contents*
 
+INTRODUCTION..........................................................|todoist|
+TABLE OF CONTENTS............................................|todoist-contents|
+INSTALLATION.............................................|todoist-installation|
+REQUIREMENTS.............................................|todoist-requirements|
+USAGE...........................................................|todoist-usage|
+MAPPINGS.....................................................|todoist-mappings|
+OPTIONS.......................................................|todoist-options|
+INTEGRATION...............................................|todoist-integration|
+OTHER...........................................................|todoist-other|
+ABOUT...........................................................|todoist-about|
 
 INSTALLATION                                             *todoist-installation*
 
