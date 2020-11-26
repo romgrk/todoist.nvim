@@ -394,13 +394,13 @@ async function onChangePriority() {
   const index = await getCurrentItemIndex()
   const currentItem = state.items[index]
 
-  const pri = await input('Question', 'Priority: ')
-  if (!pri)
+  const priority = await input('Question', 'Priority: ', currentItem.priority)
+  if (!priority || priority === currentItem.priority)
     return
 
   const patch = {
     id: currentItem.id,
-    pri: { priority: pri },
+    priority,
   }
 
   console.log('change-priority', patch)
