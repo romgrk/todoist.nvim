@@ -49,6 +49,10 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 |`x`|Toggle current task completion|
 |`cc`|Change current task text|
 |`cd`|Change current task date ([date formats](https://get.todoist.help/hc/en-us/articles/205325931-Due-Dates-Times))|
+|`p1`|Make task Priority 1|
+|`p2`|Make task Priority 2|
+|`p3`|Make task Priority 3|
+|`p4`|Make task Priority 4|
 |`DD`|Delete current task|
 |`O`|Add new task before|
 |`o`|Add new task after|

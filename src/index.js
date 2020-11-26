@@ -24,6 +24,10 @@ const mappings = [
   'nnoremap <buffer><silent> pDD  :call Todoist__onProjectDelete()<CR>',
   'nnoremap <buffer><silent> pcc  :call Todoist__onProjectChangeColor(todoist#get_color())<CR>',
   'nnoremap <buffer><silent> pcn  :call Todoist__onProjectChangeName()<CR>',
+  'nnoremap <buffer><silent> p4  :call Todoist__onChangePriority(1)<CR>',
+  'nnoremap <buffer><silent> p3  :call Todoist__onChangePriority(2)<CR>',
+  'nnoremap <buffer><silent> p2  :call Todoist__onChangePriority(3)<CR>',
+  'nnoremap <buffer><silent> p1  :call Todoist__onChangePriority(4)<CR>',
 ]
 
 const defaultOptions = {
@@ -389,6 +393,33 @@ async function onChangeContent() {
   await refresh()
 }
 
+async function onChangePriority(priority) {
+  const index = await getCurrentItemIndex()
+  const currentItem = state.items[index]
+
+  if (priority === currentItem.priority)
+    return
+
+  const patch = {
+    id: currentItem.id,
+    priority,
+  }
+
+  console.log('change-priority', patch)
+
+  try {
+    currentItem.loading = true
+    await render.line(nvim, state, index)
+    await todoist.items.update(patch)
+    setErrorMessage()
+  } catch(err) {
+    currentItem.loading = false
+    setErrorMessage(err.message)
+  }
+
+  await refresh()
+}
+
 async function onChangeDate() {
   const index = await getCurrentItemIndex()
   const currentItem = state.items[index]
@@ -505,6 +536,7 @@ module.exports = plugin => {
   _function('Todoist__onUnindent',           pcall(onUnindent),           { sync: false })
   _function('Todoist__onChangeContent',      pcall(onChangeContent),      { sync: false })
   _function('Todoist__onChangeDate',         pcall(onChangeDate),         { sync: false })
+  _function('Todoist__onChangePriority',     pcall(onChangePriority),     { sync: false })
   _function('Todoist__onRefresh',            pcall(onRefresh),            { sync: false })
   _function('Todoist__onProjectArchive',     pcall(onProjectArchive),     { sync: false })
   _function('Todoist__onProjectDelete',      pcall(onProjectDelete),      { sync: false })

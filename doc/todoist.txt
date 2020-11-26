@@ -79,6 +79,18 @@ o                       Add new task after the cursor.
                                                 *todoist_r*
 r                       Refresh the Todoist session.
 
+                                               *todoist_p1*
+p1                      Change the current tasks' state to Priority 1.
+
+                                               *todoist_p2*
+p2                      Change the current tasks' state to Priority 2.
+
+                                               *todoist_p3*
+p3                      Change the current tasks' state to Priority 3.
+
+                                               *todoist_p4*
+p4                      Change the current tasks' state to Priority 4.
+
                                               *todoist_pcc*
 pcc                     Change the current projects' color.
 
