@@ -110,21 +110,21 @@ function renderIndent(state, i) {
 }
 
 function renderCheckbox(state, i) {
-  const pri = i.priority
-  switch (pri) {
+  var col;
+  switch (i.priority) {
     case 4 :
-      hl = 'todoistPri1'
+      col = 'todoistPri1'
       break;
     case 3 :
-      hl = 'todoistPri2'
+      col = 'todoistPri2'
       break;
     case 2 :
-      hl = 'todoistPri3'
+      col = 'todoistPri3'
       break;
     default:
-      hl = 'todoistCheckbox'
+      col = 'todoistCheckbox'
   }
-  // const hl = i.error ? 'todoistError' : 'todoistCheckbox'
+  const hl = i.error ? 'todoistError' : col
   const text =
     i.loading ? state.options.icons.loading :
     i.error ?   state.options.icons.error :
