@@ -63,7 +63,7 @@ function lineToItemIndex(lineNumber) {
 function renderHeader(state) {
   const { currentProjectName, currentProject = {} } = state
 
-  const titleHl = 
+  const titleHl =
     currentProject.color === 48 && currentProjectName === 'Inbox' ?
       'todoistTitle' :
     currentProject.color ?
@@ -110,13 +110,26 @@ function renderIndent(state, i) {
 }
 
 function renderCheckbox(state, i) {
-  const hl = i.error ? 'todoistError' : 'todoistCheckbox'
+  var col;
+  switch (i.priority) {
+    case 4 :
+      col = 'todoistPri1'
+      break;
+    case 3 :
+      col = 'todoistPri2'
+      break;
+    case 2 :
+      col = 'todoistPri3'
+      break;
+    default:
+      col = 'todoistCheckbox'
+  }
+  const hl = i.error ? 'todoistError' : col
   const text =
     i.loading ? state.options.icons.loading :
     i.error ?   state.options.icons.error :
     i.checked ? state.options.icons.checked :
                 state.options.icons.unchecked
-
   return { hl, text }
 }
 
