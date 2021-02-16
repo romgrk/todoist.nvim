@@ -109,22 +109,17 @@ function renderIndent(state, i) {
   return { hl: 'Normal', text: ' '.repeat(i.depth * (state.options.icons.checked.length - 1)) }
 }
 
+const HL_BY_PRIORITY = {
+  4: 'todoistPri1',
+  3: 'todoistPri2',
+  2: 'todoistPri3',
+  default: 'todoistCheckbox',
+}
+
 function renderCheckbox(state, i) {
-  var col;
-  switch (i.priority) {
-    case 4 :
-      col = 'todoistPri1'
-      break;
-    case 3 :
-      col = 'todoistPri2'
-      break;
-    case 2 :
-      col = 'todoistPri3'
-      break;
-    default:
-      col = 'todoistCheckbox'
-  }
-  const hl = i.error ? 'todoistError' : col
+  const hl = i.error ? 'todoistError' :
+    (HL_BY_PRIORITY[i.priority] || HL_BY_PRIORITY.default)
+
   const text =
     i.loading ? state.options.icons.loading :
     i.error ?   state.options.icons.error :
