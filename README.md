@@ -69,7 +69,7 @@ Make sure your nodejs provider works (`:checkhealth` to confirm).
 Below are the default options:
 
 ```vim
-let g:todoist = {
+let todoist = {
 \  'icons': {
 \    'unchecked': ' [ ] ',
 \    'checked':   ' [x] ',
@@ -85,9 +85,6 @@ If you have a [NerdFont](https://www.nerdfonts.com/) installed, you can use the 
 below, that will render like in the gif above.
 
 ```vim
-" NOTE: keep your key in an env var for more safety; you don't want it in your
-"       vim config because you'll end up pushing it to github like I did
-
 let todoist = {
 \ 'icons': {
 \   'unchecked': '  ',
