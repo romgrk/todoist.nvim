@@ -100,14 +100,11 @@ let todoist = {
 
 ### Integration with Clap
 
-If you're using [vim-clap](https://github.com/liuchengxu/vim-clap), you can integrate
-project selection by adding this to your config files:
+This plugin implements a [vim-clap](https://github.com/liuchengxu/vim-clap) provider
+for selecting your projects.
 
 ```vim
-let clap_provider_todoist = {
-\ 'source': {-> Todoist__listProjects()},
-\ 'sink': 'Todoist',
-\}
+Clap todoist
 ```
 
 ![alt text](./static/clap-integration.png)

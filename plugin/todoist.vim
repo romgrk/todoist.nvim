@@ -77,4 +77,12 @@ hi def link todoistMessage        Comment
 
 " }}}
 "===============================================================================
+" Clap provider                                                              {{{
 
+let clap_provider_todoist = {
+\ 'source': {-> Todoist__listProjects()},
+\ 'sink': 'Todoist',
+\}
+
+" }}}
+"===============================================================================
