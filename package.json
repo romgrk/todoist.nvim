@@ -14,6 +14,6 @@
     "date-fns": "^2.14.0",
     "deepmerge": "^4.2.2",
     "rambda": "^5.4.1",
-    "todoist": "^1.0.0"
+    "todoist": "^1.0.3"
   }
 }
