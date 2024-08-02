@@ -5,7 +5,7 @@
 const fs = require('fs')
 const Color = require('color')
 const merge = require('deepmerge')
-const Todoist = require('todoist')
+const Todoist = require('todoist').Todoist
 const render = require('./render')
 const { processItems } = require('./models')
 const k = require('./constants')
