@@ -2,6 +2,9 @@
 
 > A hopefully usable todoist extension for neovim
 
+> [!WARNING]
+> This repository should work as it is but doesn't receive much maintenance.
+
 ![alt text](./static/demo.gif)
 
 For integration with vim-clap (fuzzy finder) [see below](#integration-with-clap).
