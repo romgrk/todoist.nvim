@@ -1,9 +1,10 @@
+
+> [!CAUTION]
+> This repository doesn't work anymore after Todoist v9 API deprecation.
+
 # todoist.nvim
 
 > A hopefully usable todoist extension for neovim
-
-> [!WARNING]
-> This repository should work as it is but doesn't receive much maintenance.
 
 ![alt text](./static/demo.gif)
 
